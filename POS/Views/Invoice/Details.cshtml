@@ -1,0 +1,179 @@
+﻿@model POS.Models.Invoice
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Invoice Details";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+
+        <h2>Invoice Details</h2>
+
+        <p class="text-muted mb-0">
+            @Model.InvoiceNumber
+        </p>
+
+    </div>
+
+    <div>
+
+        <a asp-action="Index"
+           class="btn btn-secondary">
+
+            <i class="bi bi-arrow-left"></i>
+            Back
+
+        </a>
+
+        <button type="button"
+                class="btn btn-primary"
+                onclick="window.print()">
+
+            <i class="bi bi-printer"></i>
+            Print
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<div class="card shadow-sm border-0">
+
+    <div class="card-body p-4">
+
+        <!-- Invoice Header -->
+
+        <div class="row mb-4">
+
+            <div class="col-md-6">
+
+                <h3 class="mb-1">
+                    FAST FOOD
+                </h3>
+
+                <p class="text-muted mb-0">
+                    Customer Invoice
+                </p>
+
+            </div>
+
+            <div class="col-md-6 text-md-end">
+
+                <h5>
+                    @Model.InvoiceNumber
+                </h5>
+
+                <p class="text-muted mb-0">
+
+                    @Model.InvoiceDate
+                    .ToString("dd MMM yyyy hh:mm tt")
+
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- Items -->
+
+        <div class="table-responsive">
+
+            <table class="table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Item
+                        </th>
+
+                        <th class="text-center">
+                            Quantity
+                        </th>
+
+                        <th class="text-end">
+                            Unit Price
+                        </th>
+
+                        <th class="text-end">
+                            Total
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @foreach (var item in Model.InvoiceItems)
+                    {
+                        <tr>
+
+                            <td>
+                                @item.ItemName
+                            </td>
+
+                            <td class="text-center">
+                                @item.Quantity
+                            </td>
+
+                            <td class="text-end">
+                                @item.UnitPrice.ToString("N2")
+                            </td>
+
+                            <td class="text-end">
+                                @item.TotalPrice.ToString("N2")
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+                <tfoot>
+
+                    <tr>
+
+                        <td colspan="3"
+                            class="text-end">
+
+                            <strong>
+                                Grand Total
+                            </strong>
+
+                        </td>
+
+                        <td class="text-end">
+
+                            <strong class="fs-5">
+
+                                @Model.GrandTotal.ToString("N2")
+
+                            </strong>
+
+                        </td>
+
+                    </tr>
+
+                </tfoot>
+
+            </table>
+
+        </div>
+
+
+        <div class="text-center mt-4 text-muted">
+
+            Thank you for your order!
+
+        </div>
+
+    </div>
+
+</div>

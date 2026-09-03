@@ -1,0 +1,513 @@
+﻿@model POS.POSViewModels.InvoiceCreateViewModel
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "New Invoice";
+
+    var foodItems = ViewBag.FoodItems as List<POS.Models.FoodItem>
+                     ?? new List<POS.Models.FoodItem>();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+        <h2>New Invoice</h2>
+        <p class="text-muted mb-0">
+            Create a new customer invoice
+        </p>
+    </div>
+
+</div>
+
+
+<div class="row g-4">
+
+    <!-- LEFT SIDE -->
+
+    <div class="col-lg-5">
+
+        <div class="card shadow-sm border-0">
+
+            <div class="card-body">
+
+                <h5 class="mb-4">
+                    Add Product
+                </h5>
+
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Food Item
+                    </label>
+
+                    <select id="foodItem"
+                            class="form-select">
+
+                        <option value="">
+                            -- Select Food Item --
+                        </option>
+
+                        @foreach (var item in foodItems)
+                        {
+                            <option value="@item.Id"
+                                    data-name="@item.Name"
+                                    data-price="@item.Price">
+
+                                @item.Name - @item.Price.ToString("N2")
+
+                            </option>
+                        }
+
+                    </select>
+
+                </div>
+
+
+                <div class="mb-4">
+
+                    <label class="form-label">
+                        Quantity
+                    </label>
+
+                    <input type="number"
+                           id="quantity"
+                           class="form-control"
+                           value="1"
+                           min="1"
+                           max="1000" />
+
+                </div>
+
+
+                <button type="button"
+                        id="addItemBtn"
+                        class="btn btn-primary w-100">
+
+                    <i class="bi bi-plus-circle"></i>
+                    Add Item
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- RIGHT SIDE -->
+
+    <div class="col-lg-7">
+
+        <div class="card shadow-sm border-0">
+
+            <div class="card-body">
+
+                <h5 class="mb-4">
+                    Invoice Items
+                </h5>
+
+
+                <div class="table-responsive">
+
+                    <table class="table align-middle"
+                           id="invoiceTable">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Item
+                                </th>
+
+                                <th style="width:100px;">
+                                    Qty
+                                </th>
+
+                                <th>
+                                    Price
+                                </th>
+
+                                <th>
+                                    Total
+                                </th>
+
+                                <th style="width:50px;">
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="invoiceItems">
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+                <!-- Empty message -->
+
+                <div id="emptyMessage"
+                     class="text-center text-muted py-4">
+
+                    No items added yet.
+
+                </div>
+
+
+                <!-- Total -->
+
+                <div class="border-top pt-3 mt-3">
+
+                    <div class="d-flex justify-content-between">
+
+                        <strong>
+                            Grand Total
+                        </strong>
+
+                        <strong id="grandTotal">
+                            0.00
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <button type="button"
+                        id="saveInvoiceBtn"
+                        class="btn btn-success w-100 mt-4">
+
+                    <i class="bi bi-check-circle"></i>
+                    Save Invoice
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@section Scripts {
+
+    <script>
+
+        let invoiceItems = [];
+
+
+        // Add Item
+        document.getElementById("addItemBtn")
+            .addEventListener("click", function () {
+
+                const select = document.getElementById("foodItem");
+
+                const quantityInput =
+                    document.getElementById("quantity");
+
+                const foodItemId = select.value;
+
+                const quantity =
+                    parseInt(quantityInput.value);
+
+
+                if (!foodItemId) {
+
+                    alert("Please select a food item.");
+
+                    return;
+                }
+
+
+                if (!quantity || quantity < 1) {
+
+                    alert("Please enter a valid quantity.");
+
+                    return;
+                }
+
+
+                const option =
+                    select.options[select.selectedIndex];
+
+
+                const name =
+                    option.getAttribute("data-name");
+
+                const price =
+                    parseFloat(option.getAttribute("data-price"));
+
+
+                // Check if item already exists
+
+                const existingItem =
+                    invoiceItems.find(x =>
+                        x.foodItemId == foodItemId);
+
+
+                if (existingItem) {
+
+                    existingItem.quantity += quantity;
+
+                }
+                else {
+
+                    invoiceItems.push({
+
+                        foodItemId: parseInt(foodItemId),
+
+                        name: name,
+
+                        price: price,
+
+                        quantity: quantity
+
+                    });
+
+                }
+
+
+                renderInvoice();
+
+                select.value = "";
+
+                quantityInput.value = 1;
+
+            });
+
+
+        // Render Invoice
+
+        function renderInvoice() {
+
+            const tbody =
+                document.getElementById("invoiceItems");
+
+            tbody.innerHTML = "";
+
+
+            let grandTotal = 0;
+
+
+            if (invoiceItems.length === 0) {
+
+                document.getElementById("emptyMessage")
+                    .style.display = "block";
+
+            }
+            else {
+
+                document.getElementById("emptyMessage")
+                    .style.display = "none";
+            }
+
+
+            invoiceItems.forEach((item, index) => {
+
+                const total =
+                    item.price * item.quantity;
+
+
+                grandTotal += total;
+
+
+                const row =
+                    document.createElement("tr");
+
+
+                row.innerHTML = `
+
+                        <td>
+                            <strong>${item.name}</strong>
+                        </td>
+
+                        <td>
+                            <input type="number"
+                                   class="form-control form-control-sm item-quantity"
+                                   value="${item.quantity}"
+                                   min="1"
+                                   data-index="${index}">
+                        </td>
+
+                        <td>
+                            ${item.price.toFixed(2)}
+                        </td>
+
+                        <td>
+                            <strong>
+                                ${total.toFixed(2)}
+                            </strong>
+                        </td>
+
+                        <td>
+
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger remove-item"
+                                    data-index="${index}">
+
+                                <i class="bi bi-trash"></i>
+
+                            </button>
+
+                        </td>
+                    `;
+
+
+                tbody.appendChild(row);
+
+            });
+
+
+            document.getElementById("grandTotal")
+                .textContent =
+                grandTotal.toFixed(2);
+
+
+            // Quantity change
+
+            document.querySelectorAll(".item-quantity")
+                .forEach(input => {
+
+                    input.addEventListener("change",
+                        function () {
+
+                            const index =
+                                parseInt(this.dataset.index);
+
+                            const quantity =
+                                parseInt(this.value);
+
+
+                            if (quantity < 1) {
+
+                                this.value = 1;
+
+                                invoiceItems[index].quantity = 1;
+
+                            }
+                            else {
+
+                                invoiceItems[index].quantity =
+                                    quantity;
+                            }
+
+
+                            renderInvoice();
+
+                        });
+
+                });
+
+
+            // Remove item
+
+            document.querySelectorAll(".remove-item")
+                .forEach(button => {
+
+                    button.addEventListener("click",
+                        function () {
+
+                            const index =
+                                parseInt(this.dataset.index);
+
+                            invoiceItems.splice(index, 1);
+
+                            renderInvoice();
+
+                        });
+
+                });
+
+        }
+
+
+        // Save Invoice
+
+        document.getElementById("saveInvoiceBtn")
+            .addEventListener("click", function () {
+
+                if (invoiceItems.length === 0) {
+
+                    alert("Please add at least one item.");
+
+                    return;
+                }
+
+
+                fetch("@Url.Action("Save", "Invoice")", {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    body: JSON.stringify({
+
+                        items: invoiceItems.map(item => ({
+
+                            foodItemId:
+                                item.foodItemId,
+
+                            quantity:
+                                item.quantity
+
+                        }))
+
+                    })
+
+                })
+                    .then(response => {
+
+                        if (!response.ok) {
+
+                            throw new Error(
+                                "Failed to save invoice."
+                            );
+
+                        }
+
+                        return response.json();
+
+                    })
+                    .then(result => {
+
+                        if (result.success) {
+
+                            alert(
+                                "Invoice " +
+                                result.invoiceNumber +
+                                " saved successfully."
+                            );
+
+                            window.location.href =
+                                "@Url.Action("Create", "Invoice")";
+
+                        }
+
+                    })
+                    .catch(error => {
+
+                        console.error(error);
+
+                        alert(
+                            "Something went wrong while saving the invoice."
+                        );
+
+                    });
+
+            });
+
+    </script>
+
+}
