@@ -14,8 +14,9 @@ public partial class FoodItem
     [StringLength(200)]
     public string Name { get; set; } = null!;
 
-    [Column(TypeName = "decimal(18, 2)")]
-    public decimal Price { get; set; }
+    // Product can have multiple sizes/quantities
+    public virtual ICollection<FoodItemVariant> Variants { get; set; }
+        = new List<FoodItemVariant>();
 
     public bool IsActive { get; set; }
 
