@@ -4,6 +4,7 @@ namespace POS.POSViewModels
 {
     public class FoodItemCreateViewModel
     {
+        public int Id { get; set; }
         [Required(ErrorMessage = "Product name is required.")]
         [StringLength(200)]
         [Display(Name = "Product Name")]
@@ -22,6 +23,7 @@ namespace POS.POSViewModels
 
     public class FoodItemVariantViewModel
     {
+        public int Id { get; set; }
         [StringLength(100)]
         [Display(Name = "Variant Name")]
         public string VariantName { get; set; } = string.Empty;
