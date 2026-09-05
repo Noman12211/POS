@@ -46,14 +46,51 @@ namespace POS.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(FoodItem foodItem)
+        public async Task<IActionResult> Create(FoodItemCreateViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                return View(foodItem);
+                return View(model);
             }
 
-            foodItem.CreatedDate = DateTime.Now;
+            var foodItem = new FoodItem
+            {
+                Name = model.Name,
+                IsActive = model.IsActive,
+                CreatedDate = DateTime.Now
+            };
+
+            // Upload image
+            if (model.ImageFile != null && model.ImageFile.Length > 0)
+            {
+                var uploadsFolder = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    "images",
+                    "products"
+                );
+
+                // Create folder if it doesn't exist
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                // Generate unique file name
+                var fileName = Guid.NewGuid().ToString() +
+                               Path.GetExtension(model.ImageFile.FileName);
+
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                // Save image
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await model.ImageFile.CopyToAsync(stream);
+                }
+
+                // Save relative path in database
+                foodItem.ImagePath = "/images/products/" + fileName;
+            }
 
             _context.FoodItems.Add(foodItem);
 
@@ -61,6 +98,8 @@ namespace POS.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {

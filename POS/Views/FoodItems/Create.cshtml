@@ -16,7 +16,7 @@
 </div>
 
 
-<form asp-action="Create" method="post">
+<form asp-action="Create" method="post"enctype="multipart/form-data">
 
     <div asp-validation-summary="ModelOnly"
          class="alert alert-danger"
@@ -40,7 +40,7 @@
             <div class="row">
 
                 <!-- PRODUCT NAME -->
-                <div class="col-md-6 mb-3">
+                <div class="col-md-3 mb-3">
 
                     <label asp-for="Name"
                            class="form-label">
@@ -58,7 +58,7 @@
 
 
                 <!-- BASE PRICE -->
-                <div class="col-md-6 mb-3">
+                <div class="col-md-3 mb-3">
 
                     <label asp-for="Price"
                            class="form-label">
@@ -81,20 +81,36 @@
 
                 </div>
 
+                <!-- Image -->
+                <div class="col-md-3 mb-3">
+                    <label asp-for="ImageFile" class="form-label"></label>
+
+                    <input asp-for="ImageFile"
+                           class="form-control"
+                           type="file"
+                           accept="image/*" />
+
+                    <span asp-validation-for="ImageFile" class="text-danger"></span>
+                </div>
+
+                <!-- ACTIVE -->
+                <div class="col-md-3 mb-3">
+                    <label asp-for="IsActive" class="form-label"></label>
+                <div class="form-check">
+
+                    <input asp-for="IsActive"
+                           class="form-check-input" />
+
+                    <label> IsActive
+                    </label>
+
+                </div>
+                </div>
+
             </div>
 
 
-            <!-- ACTIVE -->
-            <div class="form-check">
-
-                <input asp-for="IsActive"
-                       class="form-check-input" />
-
-                <label asp-for="IsActive"
-                       class="form-check-label">
-                </label>
-
-            </div>
+            
 
         </div>
 
@@ -296,213 +312,202 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 
-
+        ```html
     <script>
+        document.addEventListener("DOMContentLoaded", function () {
 
-        let variantIndex = @((Model.Variants?.Count ?? 0));
+            let variantIndex = @((Model.Variants?.Count ?? 0));
 
+            const addVariantBtn = document.getElementById("addVariantBtn");
+            const variantsContainer = document.getElementById("variantsContainer");
+            const noVariantsMessage = document.getElementById("noVariantsMessage");
 
-        // -----------------------------------------
-        // ADD VARIANT
-        // -----------------------------------------
+            // --------------------------------------------------
+            // UPDATE "NO VARIANTS" MESSAGE
+            // --------------------------------------------------
+            function updateNoVariantsMessage() {
+                if (!noVariantsMessage) return;
 
-        $("#addVariantBtn").on("click", function () {
+                const rows = variantsContainer.querySelectorAll(".variant-row");
 
-            const html = `
-
-                <div class="variant-row border rounded p-3 mb-3">
-
-                    <div class="row align-items-end">
-
-                        <!-- VARIANT NAME -->
-
-                        <div class="col-md-4 mb-3 mb-md-0">
-
-                            <label class="form-label">
-                                Variant Name
-                            </label>
-
-                            <input name="Variants[${variantIndex}].VariantName"
-                                   class="form-control"
-                                   placeholder="e.g. Large" />
-
-                        </div>
+                if (rows.length === 0) {
+                    noVariantsMessage.style.display = "block";
+                } else {
+                    noVariantsMessage.style.display = "none";
+                }
+            }
 
 
-                        <!-- PRICE -->
+            // --------------------------------------------------
+            // ADD NEW VARIANT
+            // --------------------------------------------------
+            if (addVariantBtn) {
 
-                        <div class="col-md-3 mb-3 mb-md-0">
+                addVariantBtn.addEventListener("click", function (e) {
 
-                            <label class="form-label">
-                                Price
-                            </label>
+                    e.preventDefault();
 
-                            <input name="Variants[${variantIndex}].Price"
-                                   class="form-control variant-price"
-                                   type="number"
-                                   step="0.01"
-                                   min="0"
-                                   placeholder="0.00" />
-
-                        </div>
-
-
-                        <!-- CUSTOM PRICE -->
-
-                        <div class="col-md-2 mb-3 mb-md-0">
-
-                            <div class="form-check">
+                    const html = `
+                            <div class="variant-row border rounded p-3 mb-3">
 
                                 <input type="hidden"
-                                       name="Variants[${variantIndex}].IsCustomPrice"
-                                       value="false" />
+                                       name="Variants[${variantIndex}].Id"
+                                       value="0" />
 
-                                <input name="Variants[${variantIndex}].IsCustomPrice"
-                                       value="true"
-                                       type="checkbox"
-                                       class="form-check-input custom-price-checkbox" />
+                                <div class="row align-items-end">
 
-                                <label class="form-check-label">
-                                    Custom Price
-                                </label>
+                                    <div class="col-md-4">
+                                        <label class="form-label">
+                                            Variant Name
+                                        </label>
+
+                                        <input type="text"
+                                               name="Variants[${variantIndex}].VariantName"
+                                               class="form-control"
+                                               placeholder="e.g. Small, Medium, Large"
+                                               required />
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label">
+                                            Price
+                                        </label>
+
+                                        <input type="number"
+                                               name="Variants[${variantIndex}].Price"
+                                               class="form-control variant-price"
+                                               value="0"
+                                               min="0"
+                                               step="0.01" />
+                                    </div>
+
+                                    <div class="col-md-2">
+
+                                        <div class="form-check">
+
+                                            <input type="hidden"
+                                                   name="Variants[${variantIndex}].IsCustomPrice"
+                                                   value="false" />
+
+                                            <input type="checkbox"
+                                                   name="Variants[${variantIndex}].IsCustomPrice"
+                                                   value="true"
+                                                   class="form-check-input custom-price-checkbox" />
+
+                                            <label class="form-check-label">
+                                                Custom Price
+                                            </label>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-md-2">
+
+                                        <div class="form-check">
+
+                                            <input type="hidden"
+                                                   name="Variants[${variantIndex}].IsActive"
+                                                   value="false" />
+
+                                            <input type="checkbox"
+                                                   name="Variants[${variantIndex}].IsActive"
+                                                   value="true"
+                                                   class="form-check-input"
+                                                   checked />
+
+                                            <label class="form-check-label">
+                                                Active
+                                            </label>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-md-1">
+
+                                        <button type="button"
+                                                class="btn btn-danger remove-variant"
+                                                title="Remove Variant">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+
+                                    </div>
+
+                                </div>
 
                             </div>
+                        `;
 
-                        </div>
+                    variantsContainer.insertAdjacentHTML("beforeend", html);
 
+                    variantIndex++;
 
-                        <!-- ACTIVE -->
-
-                        <div class="col-md-2 mb-3 mb-md-0">
-
-                            <div class="form-check">
-
-                                <input type="hidden"
-                                       name="Variants[${variantIndex}].IsActive"
-                                       value="false" />
-
-                                <input name="Variants[${variantIndex}].IsActive"
-                                       value="true"
-                                       type="checkbox"
-                                       class="form-check-input"
-                                       checked />
-
-                                <label class="form-check-label">
-                                    Active
-                                </label>
-
-                            </div>
-
-                        </div>
+                    updateNoVariantsMessage();
+                });
+            }
 
 
-                        <!-- REMOVE -->
+            // --------------------------------------------------
+            // CUSTOM PRICE CHECKBOX
+            // --------------------------------------------------
+            document.addEventListener("change", function (e) {
 
-                        <div class="col-md-1 text-end">
-
-                            <button type="button"
-                                    class="btn btn-outline-danger btn-sm remove-variant"
-                                    title="Remove variant">
-
-                                <i class="bi bi-trash"></i>
-
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                </div>
-            `;
-
-
-            $("#variantsContainer").append(html);
-
-            variantIndex++;
-
-            updateNoVariantsMessage();
-
-        });
-
-
-        // -----------------------------------------
-        // REMOVE VARIANT
-        // -----------------------------------------
-
-        $(document).on("click", ".remove-variant", function () {
-
-            $(this).closest(".variant-row").remove();
-
-            updateNoVariantsMessage();
-
-        });
-
-
-        // -----------------------------------------
-        // CUSTOM PRICE
-        // -----------------------------------------
-
-        $(document).on(
-            "change",
-            ".custom-price-checkbox",
-            function () {
-
-                const row = $(this).closest(".variant-row");
-
-                const priceInput = row.find(".variant-price");
-
-                if ($(this).is(":checked")) {
-
-                    priceInput.val("");
-
-                    priceInput.prop("disabled", true);
-
-                    priceInput.attr(
-                        "placeholder",
-                        "Price entered at sale"
-                    );
-
-                }
-                else {
-
-                    priceInput.prop("disabled", false);
-
-                    priceInput.attr(
-                        "placeholder",
-                        "0.00"
-                    );
-
+                if (!e.target.classList.contains("custom-price-checkbox")) {
+                    return;
                 }
 
-            }
-        );
+                const row = e.target.closest(".variant-row");
+
+                if (!row) return;
+
+                const priceInput = row.querySelector(".variant-price");
+
+                if (!priceInput) return;
+
+                if (e.target.checked) {
+
+                    priceInput.value = "0";
+                    priceInput.disabled = true;
+
+                } else {
+
+                    priceInput.disabled = false;
+
+                }
+            });
 
 
-        // -----------------------------------------
-        // NO VARIANTS MESSAGE
-        // -----------------------------------------
+            // --------------------------------------------------
+            // REMOVE VARIANT
+            // --------------------------------------------------
+            document.addEventListener("click", function (e) {
 
-        function updateNoVariantsMessage() {
+                const removeButton = e.target.closest(".remove-variant");
 
-            if ($("#variantsContainer .variant-row").length === 0) {
+                if (!removeButton) {
+                    return;
+                }
 
-                $("#noVariantsMessage").show();
+                e.preventDefault();
 
-            }
-            else {
+                const row = removeButton.closest(".variant-row");
 
-                $("#noVariantsMessage").hide();
+                if (row) {
+                    row.remove();
+                }
 
-            }
+                updateNoVariantsMessage();
+            });
 
-        }
 
-
-        $(document).ready(function () {
-
+            // --------------------------------------------------
+            // INITIAL STATE
+            // --------------------------------------------------
             updateNoVariantsMessage();
 
         });
-
     </script>
+```
+
 }

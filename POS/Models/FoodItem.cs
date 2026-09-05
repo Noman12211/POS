@@ -13,6 +13,8 @@ public partial class FoodItem
 
     [StringLength(200)]
     public string Name { get; set; } = null!;
+    [StringLength(500)]
+    public string? ImagePath { get; set; }
 
     // Product can have multiple sizes/quantities
     public virtual ICollection<FoodItemVariant> Variants { get; set; }

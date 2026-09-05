@@ -37,6 +37,7 @@
 
                     <tr>
                         <th>#</th>
+                        <th>Image</th>
                         <th>Product</th> 
                         <th>Status</th>
                         <th></th>
@@ -52,6 +53,18 @@
 
                             <td>
                                 @item.Id
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(item.ImagePath))
+                                {
+                                    <img src="@item.ImagePath"
+                                         alt="@item.Name"
+                                         style="width:80px; height:80px; object-fit:cover;" />
+                                }
+                                else
+                                {
+                                    <span>No Image</span>
+                                }
                             </td>
 
                             <td>

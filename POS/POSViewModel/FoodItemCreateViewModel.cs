@@ -13,8 +13,14 @@ namespace POS.POSViewModels
         [Range(0, double.MaxValue, ErrorMessage = "Price must be 0 or greater.")]
         [Display(Name = "Base Price")]
         public decimal Price { get; set; }
+        [StringLength(500)]
+        public string? ImagePath { get; set; } 
+        
+        [Display(Name = "Product Image")]
+        public IFormFile? ImageFile { get; set; }
 
-        [Display(Name = "Active")]
+
+        [Display(Name = "Status")]
         public bool IsActive { get; set; } = true;
 
         public List<FoodItemVariantViewModel>? Variants { get; set; }
