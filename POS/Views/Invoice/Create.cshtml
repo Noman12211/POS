@@ -1,4 +1,5 @@
-﻿@model POS.POSViewModels.InvoiceCreateViewModel
+﻿```cshtml
+@model POS.POSViewModels.InvoiceCreateViewModel
 
 @{
     Layout = "_AdminLayout";
@@ -23,7 +24,6 @@
 <div class="row g-4">
 
     <!-- LEFT SIDE -->
-
     <div class="col-lg-5">
 
         <div class="card shadow-sm border-0">
@@ -35,6 +35,7 @@
                 </h5>
 
 
+                <!-- Food Item -->
                 <div class="mb-3">
 
                     <label class="form-label">
@@ -50,12 +51,8 @@
 
                         @foreach (var item in foodItems)
                         {
-                            <option value="@item.Id"
-                                    data-name="@item.Name"
-                                    data-price="@item.Price">
-
-                                @item.Name - @item.Price.ToString("N2")
-
+                            <option value="@item.Id">
+                                @item.Name
                             </option>
                         }
 
@@ -64,6 +61,63 @@
                 </div>
 
 
+                <!-- Variant -->
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Size / Quantity
+                    </label>
+
+                    <select id="foodItemVariant"
+                            class="form-select"
+                            disabled>
+
+                        <option value="">
+                            -- Select Size / Quantity --
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- Custom Price -->
+                <div class="mb-3"
+                     id="customPriceContainer"
+                     style="display:none;">
+
+                    <label class="form-label">
+                        Custom Price
+                    </label>
+
+                    <input type="number"
+                           id="customPrice"
+                           class="form-control"
+                           min="0.01"
+                           step="0.01"
+                           placeholder="Enter amount" />
+
+                </div>
+
+
+                <!-- Normal Price -->
+                <div class="mb-3"
+                     id="priceContainer"
+                     style="display:none;">
+
+                    <label class="form-label">
+                        Price
+                    </label>
+
+                    <input type="text"
+                           id="variantPrice"
+                           class="form-control"
+                           readonly />
+
+                </div>
+
+
+                <!-- Quantity -->
                 <div class="mb-4">
 
                     <label class="form-label">
@@ -97,7 +151,6 @@
 
 
     <!-- RIGHT SIDE -->
-
     <div class="col-lg-7">
 
         <div class="card shadow-sm border-0">
@@ -120,6 +173,10 @@
 
                                 <th>
                                     Item
+                                </th>
+
+                                <th>
+                                    Variant
                                 </th>
 
                                 <th style="width:100px;">
@@ -150,7 +207,6 @@
 
 
                 <!-- Empty message -->
-
                 <div id="emptyMessage"
                      class="text-center text-muted py-4">
 
@@ -160,7 +216,6 @@
 
 
                 <!-- Total -->
-
                 <div class="border-top pt-3 mt-3">
 
                     <div class="d-flex justify-content-between">
@@ -178,12 +233,13 @@
                 </div>
 
 
+                <!-- Save & Print -->
                 <button type="button"
                         id="saveInvoiceBtn"
                         class="btn btn-success w-100 mt-4">
 
                     <i class="bi bi-check-circle"></i>
-                    Save & Print; 
+                    Save & Print
 
                 </button>
 
@@ -200,56 +256,324 @@
 
     <script>
 
+        // All food items and their variants
+        const foodItems = @Html.Raw(
+        System.Text.Json.JsonSerializer.Serialize(
+        foodItems.Select(x => new
+        {
+            id = x.Id,
+            name = x.Name,
+            variants = x.Variants
+        .Where(v => v.IsActive)
+        .Select(v => new
+        {
+            id = v.Id,
+            name = v.VariantName,
+            price = v.Price,
+            isCustomPrice = v.IsCustomPrice
+        })
+        .ToList()
+        })
+        )
+        );
+
+
+        // Items currently added to invoice
         let invoiceItems = [];
 
 
+        // --------------------------------------------------
+        // Food Item Change
+        // --------------------------------------------------
+
+        document.getElementById("foodItem")
+            .addEventListener("change", function () {
+
+                const foodItemId = parseInt(this.value);
+
+                const variantSelect =
+                    document.getElementById("foodItemVariant");
+
+                const priceContainer =
+                    document.getElementById("priceContainer");
+
+                const customPriceContainer =
+                    document.getElementById("customPriceContainer");
+
+                const priceInput =
+                    document.getElementById("variantPrice");
+
+                const customPriceInput =
+                    document.getElementById("customPrice");
+
+
+                // Reset
+                variantSelect.innerHTML = `
+                            <option value="">
+                                -- Select Size / Quantity --
+                            </option>
+                        `;
+
+                variantSelect.disabled = true;
+
+                priceContainer.style.display = "none";
+                customPriceContainer.style.display = "none";
+
+                priceInput.value = "";
+                customPriceInput.value = "";
+
+
+                if (!foodItemId) {
+                    return;
+                }
+
+
+                // Find selected food item
+                const foodItem = foodItems.find(
+                    x => x.id === foodItemId
+                );
+
+
+                if (!foodItem) {
+                    return;
+                }
+
+
+                // Add variants
+                foodItem.variants.forEach(function (variant) {
+
+                    const option =
+                        document.createElement("option");
+
+                    option.value = variant.id;
+
+                    option.textContent =
+                        variant.name +
+                        (variant.isCustomPrice
+                            ? ""
+                            : " - " +
+                            Number(variant.price).toFixed(2));
+
+                    option.dataset.price =
+                        variant.price;
+
+                    option.dataset.custom =
+                        variant.isCustomPrice;
+
+                    variantSelect.appendChild(option);
+
+                });
+
+
+                if (foodItem.variants.length > 0) {
+
+                    variantSelect.disabled = false;
+
+                }
+
+            });
+
+
+        // --------------------------------------------------
+        // Variant Change
+        // --------------------------------------------------
+
+        document.getElementById("foodItemVariant")
+            .addEventListener("change", function () {
+
+                const selectedOption =
+                    this.options[this.selectedIndex];
+
+                const priceContainer =
+                    document.getElementById("priceContainer");
+
+                const customPriceContainer =
+                    document.getElementById("customPriceContainer");
+
+                const priceInput =
+                    document.getElementById("variantPrice");
+
+                const customPriceInput =
+                    document.getElementById("customPrice");
+
+
+                priceContainer.style.display = "none";
+                customPriceContainer.style.display = "none";
+
+                priceInput.value = "";
+                customPriceInput.value = "";
+
+
+                if (!this.value) {
+                    return;
+                }
+
+
+                const isCustom =
+                    selectedOption.dataset.custom === "true";
+
+
+                const price =
+                    parseFloat(selectedOption.dataset.price);
+
+
+                if (isCustom) {
+
+                    // Custom price
+                    customPriceContainer.style.display =
+                        "block";
+
+                    customPriceInput.focus();
+
+                }
+                else {
+
+                    // Normal price
+                    priceContainer.style.display =
+                        "block";
+
+                    priceInput.value =
+                        price.toFixed(2);
+
+                }
+
+            });
+
+
+        // --------------------------------------------------
         // Add Item
+        // --------------------------------------------------
+
         document.getElementById("addItemBtn")
             .addEventListener("click", function () {
 
-                const select = document.getElementById("foodItem");
+                const foodItemSelect =
+                    document.getElementById("foodItem");
+
+                const variantSelect =
+                    document.getElementById("foodItemVariant");
 
                 const quantityInput =
                     document.getElementById("quantity");
 
-                const foodItemId = select.value;
+                const customPriceInput =
+                    document.getElementById("customPrice");
+
+
+                const foodItemId =
+                    parseInt(foodItemSelect.value);
+
+                const variantId =
+                    parseInt(variantSelect.value);
 
                 const quantity =
                     parseInt(quantityInput.value);
 
 
+                // Validate food item
                 if (!foodItemId) {
 
                     alert("Please select a food item.");
 
+                    foodItemSelect.focus();
+
                     return;
                 }
 
 
+                // Validate variant
+                if (!variantId) {
+
+                    alert("Please select a size / quantity.");
+
+                    variantSelect.focus();
+
+                    return;
+                }
+
+
+                // Validate quantity
                 if (!quantity || quantity < 1) {
 
                     alert("Please enter a valid quantity.");
 
+                    quantityInput.focus();
+
                     return;
                 }
 
 
-                const option =
-                    select.options[select.selectedIndex];
+                // Find food item
+                const foodItem =
+                    foodItems.find(
+                        x => x.id === foodItemId
+                    );
 
 
-                const name =
-                    option.getAttribute("data-name");
+                if (!foodItem) {
 
-                const price =
-                    parseFloat(option.getAttribute("data-price"));
+                    alert("Food item not found.");
+
+                    return;
+                }
 
 
-                // Check if item already exists
+                // Find variant
+                const variant =
+                    foodItem.variants.find(
+                        x => x.id === variantId
+                    );
 
+
+                if (!variant) {
+
+                    alert("Food item variant not found.");
+
+                    return;
+                }
+
+
+                let price;
+
+
+                // Custom price
+                if (variant.isCustomPrice) {
+
+                    price =
+                        parseFloat(customPriceInput.value);
+
+
+                    if (!price || price <= 0) {
+
+                        alert(
+                            "Please enter a valid custom price."
+                        );
+
+                        customPriceInput.focus();
+
+                        return;
+                    }
+
+                }
+                else {
+
+                    price =
+                        parseFloat(variant.price);
+
+                }
+
+
+                // Check whether the same food item + variant
+                // already exists
                 const existingItem =
                     invoiceItems.find(x =>
-                        x.foodItemId == foodItemId);
+                        x.foodItemId === foodItemId &&
+                        x.foodItemVariantId === variantId &&
+                        (
+                            !variant.isCustomPrice ||
+                            x.customPrice === price
+                        )
+                    );
 
 
                 if (existingItem) {
@@ -261,13 +585,28 @@
 
                     invoiceItems.push({
 
-                        foodItemId: parseInt(foodItemId),
+                        foodItemId:
+                            foodItemId,
 
-                        name: name,
+                        foodItemVariantId:
+                            variantId,
 
-                        price: price,
+                        name:
+                            foodItem.name,
 
-                        quantity: quantity
+                        variantName:
+                            variant.name,
+
+                        price:
+                            price,
+
+                        quantity:
+                            quantity,
+
+                        customPrice:
+                            variant.isCustomPrice
+                                ? price
+                                : null
 
                     });
 
@@ -276,14 +615,38 @@
 
                 renderInvoice();
 
-                select.value = "";
+
+                // Reset selection
+                foodItemSelect.value = "";
+
+                variantSelect.innerHTML = `
+                            <option value="">
+                                -- Select Size / Quantity --
+                            </option>
+                        `;
+
+                variantSelect.disabled = true;
+
+                document.getElementById("priceContainer")
+                    .style.display = "none";
+
+                document.getElementById("customPriceContainer")
+                    .style.display = "none";
+
+                document.getElementById("variantPrice")
+                    .value = "";
+
+                document.getElementById("customPrice")
+                    .value = "";
 
                 quantityInput.value = 1;
 
             });
 
 
+        // --------------------------------------------------
         // Render Invoice
+        // --------------------------------------------------
 
         function renderInvoice() {
 
@@ -306,10 +669,11 @@
 
                 document.getElementById("emptyMessage")
                     .style.display = "none";
+
             }
 
 
-            invoiceItems.forEach((item, index) => {
+            invoiceItems.forEach(function (item, index) {
 
                 const total =
                     item.price * item.quantity;
@@ -324,40 +688,50 @@
 
                 row.innerHTML = `
 
-                        <td>
-                            <strong>${item.name}</strong>
-                        </td>
+                            <td>
+                                <strong>
+                                    ${escapeHtml(item.name)}
+                                </strong>
+                            </td>
 
-                        <td>
-                            <input type="number"
-                                   class="form-control form-control-sm item-quantity"
-                                   value="${item.quantity}"
-                                   min="1"
-                                   data-index="${index}">
-                        </td>
+                            <td>
+                                ${escapeHtml(item.variantName)}
+                            </td>
 
-                        <td>
-                            ${item.price.toFixed(2)}
-                        </td>
+                            <td>
 
-                        <td>
-                            <strong>
-                                ${total.toFixed(2)}
-                            </strong>
-                        </td>
+                                <input type="number"
+                                       class="form-control form-control-sm item-quantity"
+                                       value="${item.quantity}"
+                                       min="1"
+                                       max="1000"
+                                       data-index="${index}">
 
-                        <td>
+                            </td>
 
-                            <button type="button"
-                                    class="btn btn-sm btn-outline-danger remove-item"
-                                    data-index="${index}">
+                            <td>
+                                ${item.price.toFixed(2)}
+                            </td>
 
-                                <i class="bi bi-trash"></i>
+                            <td>
+                                <strong>
+                                    ${total.toFixed(2)}
+                                </strong>
+                            </td>
 
-                            </button>
+                            <td>
 
-                        </td>
-                    `;
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-danger remove-item"
+                                        data-index="${index}">
+
+                                    <i class="bi bi-trash"></i>
+
+                                </button>
+
+                            </td>
+
+                        `;
 
 
                 tbody.appendChild(row);
@@ -370,144 +744,229 @@
                 grandTotal.toFixed(2);
 
 
-            // Quantity change
+            // --------------------------------------------------
+            // Quantity Change
+            // --------------------------------------------------
 
             document.querySelectorAll(".item-quantity")
-                .forEach(input => {
+                .forEach(function (input) {
 
-                    input.addEventListener("change",
+                    input.addEventListener(
+                        "change",
                         function () {
 
                             const index =
                                 parseInt(this.dataset.index);
 
-                            const quantity =
+                            let quantity =
                                 parseInt(this.value);
 
 
-                            if (quantity < 1) {
+                            if (!quantity || quantity < 1) {
+
+                                quantity = 1;
 
                                 this.value = 1;
 
-                                invoiceItems[index].quantity = 1;
+                            }
+
+
+                            if (quantity > 1000) {
+
+                                quantity = 1000;
+
+                                this.value = 1000;
 
                             }
-                            else {
 
-                                invoiceItems[index].quantity =
-                                    quantity;
-                            }
+
+                            invoiceItems[index].quantity =
+                                quantity;
 
 
                             renderInvoice();
 
-                        });
+                        }
+                    );
 
                 });
 
 
-            // Remove item
+            // --------------------------------------------------
+            // Remove Item
+            // --------------------------------------------------
 
             document.querySelectorAll(".remove-item")
-                .forEach(button => {
+                .forEach(function (button) {
 
-                    button.addEventListener("click",
+                    button.addEventListener(
+                        "click",
                         function () {
 
                             const index =
                                 parseInt(this.dataset.index);
 
-                            invoiceItems.splice(index, 1);
+
+                            invoiceItems.splice(
+                                index,
+                                1
+                            );
+
 
                             renderInvoice();
 
-                        });
+                        }
+                    );
 
                 });
 
         }
 
 
+        // --------------------------------------------------
         // Save Invoice
+        // --------------------------------------------------
 
         document.getElementById("saveInvoiceBtn")
-            .addEventListener("click", function () {
+            .addEventListener("click", async function () {
 
                 if (invoiceItems.length === 0) {
 
-                    alert("Please add at least one item.");
+                    alert(
+                        "Please add at least one item."
+                    );
 
                     return;
                 }
 
 
-                fetch("@Url.Action("Save", "Invoice")", {
+                const button = this;
 
-                    method: "POST",
 
-                    headers: {
+                // Prevent double clicking
+                button.disabled = true;
 
-                        "Content-Type":
-                            "application/json"
+                button.innerHTML = `
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            Saving...
+                        `;
 
-                    },
 
-                    body: JSON.stringify({
+                try {
 
-                        items: invoiceItems.map(item => ({
+                    const response =
+                        await fetch(
+                            "@Url.Action("Save", "Invoice")",
+                            {
+                                method: "POST",
 
-                            foodItemId:
-                                item.foodItemId,
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
 
-                            quantity:
-                                item.quantity
+                                body: JSON.stringify({
 
-                        }))
+                                    items:
+                                        invoiceItems.map(item => ({
 
-                    })
+                                            foodItemVariantId:
+                                                item.foodItemVariantId,
 
-                })
-                    .then(response => {
+                                            quantity:
+                                                item.quantity,
 
-                        if (!response.ok) {
+                                            customPrice:
+                                                item.customPrice
 
-                            throw new Error(
-                                "Failed to save invoice."
-                            );
+                                        }))
 
-                        }
+                                })
 
-                        return response.json();
-
-                    })
-                    .then(result => {
-
-                        if (result.success) {
-
-                            alert(
-                                "Invoice " +
-                                result.invoiceNumber +
-                                " saved successfully."
-                            );
-
-                            window.location.href =
-                                "@Url.Action("Create", "Invoice")";
-
-                        }
-
-                    })
-                    .catch(error => {
-
-                        console.error(error);
-
-                        alert(
-                            "Something went wrong while saving the invoice."
+                            }
                         );
 
-                    });
+
+                    if (!response.ok) {
+
+                        const errorText =
+                            await response.text();
+
+                        throw new Error(
+                            errorText ||
+                            "Failed to save invoice."
+                        );
+
+                    }
+
+
+                    const result =
+                        await response.json();
+
+
+                    if (result.success) {
+
+                        // For now we simply redirect.
+                        // Direct thermal printing will be
+                        // added in the next step.
+
+                        window.location.href =
+                            "@Url.Action("Details", "Invoice")" +
+                            "?id=" +
+                            result.invoiceId;
+
+                    }
+                    else {
+
+                        throw new Error(
+                            "Invoice could not be saved."
+                        );
+
+                    }
+
+                }
+                catch (error) {
+
+                    console.error(error);
+
+                    alert(
+                        error.message ||
+                        "Something went wrong while saving the invoice."
+                    );
+
+
+                    button.disabled = false;
+
+                    button.innerHTML = `
+                                <i class="bi bi-check-circle"></i>
+                                Save & Print
+                            `;
+
+                }
 
             });
+
+
+        // --------------------------------------------------
+        // HTML Escape
+        // --------------------------------------------------
+
+        function escapeHtml(value) {
+
+            return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+
+        }
+
+
+        // Initial render
+        renderInvoice();
 
     </script>
 
 }
+```

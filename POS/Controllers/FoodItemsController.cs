@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using POS.Models;
+using POS.POSViewModels;
 
 namespace POS.Controllers
 {
@@ -39,7 +40,8 @@ namespace POS.Controllers
         [HttpGet]
         public IActionResult Create()
         {
-            return View();
+            FoodItemCreateViewModel model =new FoodItemCreateViewModel();
+            return View(model);
         }
 
         [HttpPost]
