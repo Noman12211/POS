@@ -21,7 +21,21 @@ namespace POS.Controllers
 
             return View(items);
         }
-          
+        [HttpGet]
+        public async Task<IActionResult> Details(int id)
+        {
+            var invoice = await _context.FoodItems
+                
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (invoice == null)
+            {
+                return NotFound();
+            }
+
+            return View(invoice);
+        }
+
         [HttpGet]
         public IActionResult Create()
         {

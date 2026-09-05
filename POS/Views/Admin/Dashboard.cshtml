@@ -1,4 +1,5 @@
-﻿@{
+﻿@model POS.POSViewModels.DashboardViewModel
+@{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Dashboard";
 }
@@ -19,7 +20,7 @@
                     </h6>
 
                     <h2>
-                        0
+                        @Model.productsCount
                     </h2>
 
                 </div>
@@ -37,7 +38,7 @@
                     </h6>
 
                     <h2>
-                        0
+                        @Model.TodaysInvoice
                     </h2>
 
                 </div>
@@ -55,7 +56,7 @@
                     </h6>
 
                     <h2>
-                        0.00
+                        @Model.TodaySale
                     </h2>
 
                 </div>

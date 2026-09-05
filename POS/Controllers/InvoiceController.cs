@@ -25,6 +25,7 @@ namespace POS.Controllers
 
             return View(invoices);
         }
+        [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
             var invoice = await _context.Invoices
