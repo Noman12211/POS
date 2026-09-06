@@ -155,10 +155,28 @@
         }
 
         .mobile-menu-btn {
-            display: none;
+            display: block;
             border: none;
             background: transparent;
             font-size: 24px;
+        }
+        /* Desktop collapse behavior */
+        .admin-sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .admin-main.expanded {
+            margin-left: 0;
+            width: 100%;
+        }
+
+        /* smooth transition on desktop too */
+        .admin-sidebar {
+            transition: transform .3s ease;
+        }
+
+        .admin-main {
+            transition: margin-left .3s ease, width .3s ease;
         }
     </style>
 </head>
@@ -267,6 +285,7 @@
                 </button>
 
                 <h4>
+
                     @ViewData["Title"]
                 </h4>
             </div>
@@ -293,11 +312,24 @@
 
 
 <script>
-    function toggleSidebar() {
-        document
-            .getElementById('adminSidebar')
-            .classList.toggle('show');
-    }
+    // function toggleSidebar() {
+    //     document
+    //         .getElementById('adminSidebar')
+    //         .classList.toggle('show');
+    // }
+        function toggleSidebar() {
+            const sidebar = document.getElementById('adminSidebar');
+            const main = document.querySelector('.admin-main');
+
+            if (window.innerWidth <= 768) {
+                // Mobile: slide sidebar in/out over content
+                sidebar.classList.toggle('show');
+            } else {
+                // Desktop: collapse sidebar and expand content area
+                sidebar.classList.toggle('collapsed');
+                main.classList.toggle('expanded');
+            }
+        }
 </script>
 
 @await RenderSectionAsync("Scripts", required: false)
