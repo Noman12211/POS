@@ -1,0 +1,236 @@
+﻿@model POS.Models.FoodItemVariant
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Edit Variant";
+}
+
+<div class="mb-4">
+
+    <h2>Edit Product Variant</h2>
+
+    <p class="text-muted">
+        Update this product's size, type, or variation.
+    </p>
+
+</div>
+
+
+<div class="card shadow-sm border-0">
+
+    <div class="card-body">
+
+        <form asp-action="Edit"
+              method="post">
+
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" asp-for="Id" />
+
+            <div asp-validation-summary="ModelOnly"
+                 class="alert alert-danger">
+            </div>
+
+
+            <!-- PRODUCT -->
+
+            <div class="mb-4">
+
+                <label asp-for="FoodItemId"
+                       class="form-label">
+
+                    Product
+
+                </label>
+
+                <select asp-for="FoodItemId"
+                        class="form-select">
+
+                    <option value="">
+                        -- Select Product --
+                    </option>
+
+                    @foreach (var item in ViewBag.FoodItems)
+                    {
+                        <option value="@item.Id">
+
+                            @item.Name
+
+                        </option>
+                    }
+
+                </select>
+
+                <span asp-validation-for="FoodItemId"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+
+            <!-- VARIANT NAME -->
+
+            <div class="mb-4">
+
+                <label asp-for="VariantName"
+                       class="form-label">
+
+                    Variant Name
+
+                </label>
+
+                <input asp-for="VariantName"
+                       class="form-control"
+                       placeholder="e.g. Small, Medium, Large" />
+
+                <span asp-validation-for="VariantName"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+
+            <!-- PRICE -->
+
+            <div class="mb-4">
+
+                <label asp-for="Price"
+                       class="form-label">
+
+                    Price
+
+                </label>
+
+                <input asp-for="Price"
+                       id="priceInput"
+                       class="form-control"
+                       type="number"
+                       step="0.01"
+                       min="0"
+                       placeholder="0.00" />
+
+                <span asp-validation-for="Price"
+                      class="text-danger">
+                </span>
+
+                <small class="text-muted">
+                    Leave this disabled when using custom pricing.
+                </small>
+
+            </div>
+
+
+            <!-- CUSTOM PRICE -->
+
+            <div class="form-check mb-4">
+
+                <input asp-for="IsCustomPrice"
+                       id="customPriceCheckbox"
+                       class="form-check-input" />
+
+                <label asp-for="IsCustomPrice"
+                       class="form-check-label">
+
+                    Custom Price
+
+                </label>
+
+                <div class="text-muted small">
+
+                    Cashier will enter the price when creating the invoice.
+
+                </div>
+
+            </div>
+
+
+            <!-- ACTIVE -->
+
+            <div class="form-check mb-4">
+
+                <input asp-for="IsActive"
+                       class="form-check-input" />
+
+                <label asp-for="IsActive"
+                       class="form-check-label">
+
+                    Active
+
+                </label>
+
+            </div>
+
+
+            <!-- BUTTONS -->
+
+            <div>
+
+                <button type="submit"
+                        class="btn btn-primary">
+
+                    <i class="bi bi-check-circle"></i>
+
+                    Save Variant
+
+                </button>
+
+
+                <a asp-action="Index"
+                   class="btn btn-secondary">
+
+                    Cancel
+
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+@section Scripts {
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+
+    <script>
+
+        function updatePriceState() {
+
+            const checkbox =
+                document.getElementById("customPriceCheckbox");
+
+            const price =
+                document.getElementById("priceInput");
+
+
+            if (checkbox.checked) {
+
+                price.value = "";
+
+                price.disabled = true;
+
+            }
+            else {
+
+                price.disabled = false;
+
+            }
+
+        }
+
+
+        document
+            .getElementById("customPriceCheckbox")
+            .addEventListener("change", updatePriceState);
+
+
+        updatePriceState();
+
+    </script>
+}

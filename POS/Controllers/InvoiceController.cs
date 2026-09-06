@@ -14,7 +14,6 @@ namespace POS.Controllers
             _context = context;
         }
 
-        
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -25,6 +24,7 @@ namespace POS.Controllers
 
             return View(invoices);
         }
+
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
@@ -39,11 +39,13 @@ namespace POS.Controllers
 
             return View(invoice);
         }
+
         [HttpGet]
         public async Task<IActionResult> Create()
         {
             var foodItems = await _context.FoodItems
                 .Where(x => x.IsActive)
+                .Include(x => x.Variants)
                 .OrderBy(x => x.Name)
                 .ToListAsync();
 
@@ -52,9 +54,9 @@ namespace POS.Controllers
             return View(new InvoiceCreateViewModel());
         }
 
-
         [HttpPost]
-        public async Task<IActionResult> Save([FromBody] InvoiceSaveRequest request)
+        public async Task<IActionResult> Save(
+            [FromBody] InvoiceSaveRequest request)
         {
             if (request.Items == null || request.Items.Count == 0)
             {
@@ -62,37 +64,34 @@ namespace POS.Controllers
                     "Invoice must contain at least one item.");
             }
 
-
-            var foodItemIds = request.Items
-                .Select(x => x.FoodItemId)
+            // Get all selected variants
+            var variantIds = request.Items
+                .Select(x => x.FoodItemVariantId)
                 .Distinct()
-                .ToList(); 
+                .ToList();
 
-
-            var foodItems = await _context.FoodItems
+            var variants = await _context.FoodItemVariants
+                .Include(x => x.FoodItem)
                 .Where(x =>
                     x.IsActive &&
-                    foodItemIds.Contains(x.Id))
+                    x.FoodItem.IsActive &&
+                    variantIds.Contains(x.Id))
                 .ToListAsync();
 
-
-            if (foodItems.Count() != foodItemIds.Count())
+            // Check that all requested variants exist
+            if (variants.Count != variantIds.Count)
             {
                 return BadRequest(
-                    "One or more food items are invalid.");
+                    "One or more food item variants are invalid.");
             }
 
-
-            var invoicedto = new Invoice
+            var invoice = new Invoice
             {
                 InvoiceNumber = await GenerateInvoiceNumber(),
-
                 InvoiceDate = DateTime.Now
             };
 
-
             decimal grandTotal = 0;
-
 
             foreach (var requestItem in request.Items)
             {
@@ -102,86 +101,89 @@ namespace POS.Controllers
                         "Quantity must be greater than zero.");
                 }
 
+                var variant = variants.First(
+                    x => x.Id == requestItem.FoodItemVariantId);
 
-                var foodItem = foodItems
-                    .First(x =>
-                        x.Id == requestItem.FoodItemId);
+                decimal unitPrice = variant.Price;
 
+                // Custom price
+                if (variant.IsCustomPrice)
+                {
+                    if (!requestItem.CustomPrice.HasValue ||
+                        requestItem.CustomPrice.Value <= 0)
+                    {
+                        return BadRequest(
+                            "Please enter a valid custom price.");
+                    }
+
+                    unitPrice = requestItem.CustomPrice.Value;
+                }
 
                 var totalPrice =
-                    foodItem.Price *
-                    requestItem.Quantity;
+                    unitPrice * requestItem.Quantity;
 
-
-                invoicedto.InvoiceItems.Add(
+                invoice.InvoiceItems.Add(
                     new InvoiceItem
                     {
-                        FoodItemId =
-                            foodItem.Id,
+                        FoodItemId = variant.FoodItemId,
 
-                        ItemName =
-                            foodItem.Name,
+                        FoodItemVariantId = variant.Id,
 
-                        Quantity =
-                            requestItem.Quantity,
+                        ItemName = variant.FoodItem.Name,
 
-                        UnitPrice =
-                            foodItem.Price,
+                        VariantName = variant.VariantName,
 
-                        TotalPrice =
-                            totalPrice
+                        Quantity = requestItem.Quantity,
+
+                        UnitPrice = unitPrice,
+
+                        TotalPrice = totalPrice
                     });
-
 
                 grandTotal += totalPrice;
             }
 
+            invoice.GrandTotal = grandTotal;
 
-            invoicedto.GrandTotal =
-                grandTotal;
-
-             
-            _context.Invoices.Add(invoicedto);
+            _context.Invoices.Add(invoice);
 
             await _context.SaveChangesAsync();
-
 
             return Json(new
             {
                 success = true,
-                invoiceNumber =
-                    invoicedto.InvoiceNumber,
-
-                invoiceId =
-                    invoicedto.Id
+                invoiceNumber = invoice.InvoiceNumber,
+                invoiceId = invoice.Id
             });
         }
 
-
-        private async Task<string>GenerateInvoiceNumber()
+        private async Task<string> GenerateInvoiceNumber()
         {
-            var lastInvoice = await _context.Invoices?
-                    .OrderByDescending(x => x.Id).FirstOrDefaultAsync();
+            var lastInvoice = await _context.Invoices
+                .OrderByDescending(x => x.Id)
+                .FirstOrDefaultAsync();
 
-
-            var nextNumber = lastInvoice == null ? 1 : lastInvoice.Id + 1;
-
+            var nextNumber = lastInvoice == null
+                ? 1
+                : lastInvoice.Id + 1;
 
             return $"INV-{nextNumber:D6}";
         }
     }
 
-
     public class InvoiceSaveRequest
     {
-        public List<InvoiceSaveItem> Items { get; set; } = new List<InvoiceSaveItem>();
+        public List<InvoiceSaveItem> Items { get; set; }
+            = new List<InvoiceSaveItem>();
     }
-
 
     public class InvoiceSaveItem
     {
-        public int FoodItemId { get; set; }
+        public int FoodItemVariantId { get; set; }
 
         public int Quantity { get; set; }
+
+        // Used only when the selected variant allows custom pricing
+        public decimal? CustomPrice { get; set; }
     }
 }
