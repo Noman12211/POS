@@ -91,10 +91,21 @@ namespace POS.Controllers
                 // Save relative path in database
                 foodItem.ImagePath = "/images/products/" + fileName;
             }
-
-            _context.FoodItems.Add(foodItem);
-
-            await _context.SaveChangesAsync();
+            if (model.Variants != null && model.Variants.Any())
+            {
+                foreach (var variant in model.Variants)
+                {
+                    foodItem.Variants.Add(new FoodItemVariant
+                    {
+                        VariantName = variant.VariantName,
+                        Price = variant.Price,
+                        IsCustomPrice = variant.IsCustomPrice,
+                        IsActive = variant.IsActive
+                    });
+                }
+            } 
+            _context.FoodItems.Add(foodItem); 
+            await _context.SaveChangesAsync(); 
 
             return RedirectToAction(nameof(Index));
         }
@@ -229,6 +240,29 @@ namespace POS.Controllers
 
 
             await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int Id)
+        {
+            var foodItem = await _context.FoodItems
+                .Include(x => x.Variants).Include(x => x.InvoiceItems)
+                .FirstOrDefaultAsync(x => x.Id == Id);
+
+            if (foodItem == null)
+            {
+                return NotFound();
+            }
+
+            _context.FoodItems.Remove(foodItem);
+            _context.FoodItemVariants.RemoveRange(foodItem.Variants); 
+            _context.InvoiceItems.RemoveRange(foodItem.InvoiceItems);
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] =
+                "Food Item deleted successfully.";
 
             return RedirectToAction(nameof(Index));
         }
