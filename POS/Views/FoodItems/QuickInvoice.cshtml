@@ -1,0 +1,1110 @@
+﻿
+@model IEnumerable<POS.Models.FoodItem>
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "POS";
+
+    var foodItems = Model
+        .Where(x => x.IsActive)
+        .ToList();
+}
+
+<div class="container-fluid">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="mb-1">POS</h2>
+            <p class="text-muted mb-0">
+                Select products to create an order
+            </p>
+        </div>
+
+        <div>
+            <button type="button"
+                    id="clearCartBtn"
+                    class="btn btn-outline-danger">
+                <i class="bi bi-trash"></i>
+                Clear Cart
+            </button>
+        </div>
+
+    </div>
+
+
+    <div class="row g-4">
+
+        <!-- ================================================= -->
+        <!-- PRODUCTS -->
+        <!-- ================================================= -->
+
+        <div class="col-lg-8">
+
+            <div class="card shadow-sm border-0">
+
+                <div class="card-body">
+
+                    <div class="row g-3">
+
+                        @foreach (var item in foodItems)
+                        {
+                            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+
+                                <div class="card product-card h-100"
+                                     data-id="@item.Id">
+
+                                    <!-- IMAGE -->
+
+                                    <div class="product-image-container">
+
+                                        @if (!string.IsNullOrEmpty(item.ImagePath))
+                                        {
+                                            <img src="@item.ImagePath"
+                                                 class="product-image"
+                                                 alt="@item.Name" />
+                                        }
+                                        else
+                                        {
+                                            <div class="no-image">
+                                                <i class="bi bi-image"></i>
+                                            </div>
+                                        }
+
+                                    </div>
+
+
+                                    <!-- PRODUCT INFO -->
+
+                                    <div class="card-body text-center">
+
+                                        <h6 class="product-name mb-2">
+                                            @item.Name
+                                        </h6>
+
+
+                                        @if (item.Variants != null &&
+                                       item.Variants.Any(v => v.IsActive))
+                                        {
+                                            <div class="product-variants">
+
+                                                @foreach (var variant in item.Variants
+                                               .Where(v => v.IsActive)
+                                               .OrderBy(v => v.Price))
+                                                {
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-outline-primary variant-btn"
+                                                            data-product-id="@item.Id"
+                                                            data-variant-id="@variant.Id"
+                                                            data-product-name="@item.Name"
+                                                            data-variant-name="@variant.VariantName"
+                                                            data-price="@variant.Price"
+                                                            data-custom="@variant.IsCustomPrice">
+
+                                                        @variant.VariantName
+
+                                                        @if (!variant.IsCustomPrice)
+                                                        {
+                                                            <span>
+                                                                - @variant.Price.ToString("0.00")
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>
+                                                                - Custom
+                                                            </span>
+                                                        }
+
+                                                    </button>
+                                                }
+
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-primary btn-sm w-100 product-btn"
+                                                    data-product-id="@item.Id"
+                                                    data-product-name="@item.Name">
+
+                                                Add
+
+                                            </button>
+                                        }
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- CART -->
+        <!-- ================================================= -->
+
+        <div class="col-lg-4">
+
+            <div class="card shadow-sm border-0 sticky-cart">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+
+                        <h5 class="mb-0">
+                            Current Order
+                        </h5>
+
+                        <span class="badge bg-primary"
+                              id="cartCount">
+                            0
+                        </span>
+
+                    </div>
+
+
+                    <!-- CART ITEMS -->
+
+                    <div id="cartItems">
+
+                        <div id="emptyCart"
+                             class="text-center text-muted py-5">
+
+                            <i class="bi bi-cart3"
+                               style="font-size:40px;">
+                            </i>
+
+                            <p class="mt-3 mb-0">
+                                No items added
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- TOTAL -->
+
+                    <div class="border-top mt-3 pt-3">
+
+                        <div class="d-flex justify-content-between mb-2">
+
+                            <span>
+                                Sub Total
+                            </span>
+
+                            <strong id="subTotal">
+                                0.00
+                            </strong>
+
+                        </div>
+
+
+                        <div class="d-flex justify-content-between fs-5">
+
+                            <strong>
+                                Grand Total
+                            </strong>
+
+                            <strong id="grandTotal">
+                                0.00
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- CHECKOUT -->
+
+                    <button type="button"
+                            id="checkoutBtn"
+                            class="btn btn-success w-100 mt-4"
+                            disabled>
+
+                        <i class="bi bi-check-circle"></i>
+
+                        Checkout
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- CUSTOM PRICE MODAL -->
+<!-- ===================================================== -->
+
+<div class="modal fade"
+     id="customPriceModal"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title">
+                    Enter Custom Price
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <p class="mb-3">
+                    <strong id="customProductName"></strong>
+                </p>
+
+                <label class="form-label">
+                    Price
+                </label>
+
+                <input type="number"
+                       id="customPriceInput"
+                       class="form-control"
+                       min="0.01"
+                       step="0.01"
+                       placeholder="Enter price" />
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <button type="button"
+                        class="btn btn-primary"
+                        id="confirmCustomPrice">
+                    Add Item
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<style>
+
+    /* ============================================= */
+    /* PRODUCT CARD */
+    /* ============================================= */
+
+    .product-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+        .product-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+
+
+    .product-image-container {
+        height: 160px;
+        background: #f8f9fa;
+        overflow: hidden;
+    }
+
+    .product-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+
+    .no-image {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #adb5bd;
+        font-size: 45px;
+    }
+
+
+    .product-name {
+        font-weight: 600;
+        min-height: 22px;
+    }
+
+
+    .product-variants {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+
+    .variant-btn {
+        width: 100%;
+    }
+
+
+    /* ============================================= */
+    /* CART */
+    /* ============================================= */
+
+    .sticky-cart {
+        position: sticky;
+        top: 20px;
+    }
+
+
+    .cart-item {
+        border-bottom: 1px solid #eee;
+        padding: 12px 0;
+    }
+
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+
+    .cart-item-name {
+        font-weight: 600;
+    }
+
+
+    .cart-variant {
+        font-size: 13px;
+        color: #6c757d;
+    }
+
+
+    .quantity-control {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+
+        .quantity-control button {
+            width: 28px;
+            height: 28px;
+            padding: 0;
+        }
+
+
+        .quantity-control input {
+            width: 45px;
+            text-align: center;
+        }
+
+</style>
+
+
+@section Scripts {
+
+    <script>
+
+        // =====================================================
+        // CART
+        // =====================================================
+
+        let cart = [];
+
+
+        // Used when entering custom price
+
+        let customPriceItem = null;
+
+
+        // =====================================================
+        // VARIANT BUTTONS
+        // =====================================================
+
+        document.querySelectorAll(".variant-btn")
+            .forEach(function (button) {
+
+                button.addEventListener("click", function () {
+
+                    const productId =
+                        parseInt(this.dataset.productId);
+
+                    const variantId =
+                        parseInt(this.dataset.variantId);
+
+                    const productName =
+                        this.dataset.productName;
+
+                    const variantName =
+                        this.dataset.variantName;
+
+                    const price =
+                        parseFloat(this.dataset.price);
+
+                    const isCustom =
+                        this.dataset.custom === "true";
+
+
+                    // Custom price
+
+                    if (isCustom) {
+
+                        customPriceItem = {
+
+                            productId: productId,
+
+                            variantId: variantId,
+
+                            productName: productName,
+
+                            variantName: variantName
+
+                        };
+
+
+                        document.getElementById("customProductName")
+                            .textContent =
+                            productName + " - " + variantName;
+
+
+                        document.getElementById("customPriceInput")
+                            .value = "";
+
+
+                        const modal =
+                            new bootstrap.Modal(
+                                document.getElementById("customPriceModal")
+                            );
+
+                        modal.show();
+
+                        setTimeout(function () {
+
+                            document.getElementById("customPriceInput")
+                                .focus();
+
+                        }, 300);
+
+
+                        return;
+
+                    }
+
+
+                    addToCart({
+
+                        productId: productId,
+
+                        variantId: variantId,
+
+                        productName: productName,
+
+                        variantName: variantName,
+
+                        price: price,
+
+                        customPrice: null
+
+                    });
+
+                });
+
+            });
+
+
+        // =====================================================
+        // PRODUCTS WITHOUT VARIANTS
+        // =====================================================
+
+        document.querySelectorAll(".product-btn")
+            .forEach(function (button) {
+
+                button.addEventListener("click", function () {
+
+                    const productId =
+                        parseInt(this.dataset.productId);
+
+                    const productName =
+                        this.dataset.productName;
+
+
+                    // If your database requires a variant,
+                    // products should normally have variants.
+
+                    alert(
+                        "Please add a variant for this product."
+                    );
+
+                });
+
+            });
+
+
+        // =====================================================
+        // CONFIRM CUSTOM PRICE
+        // =====================================================
+
+        document.getElementById("confirmCustomPrice")
+            .addEventListener("click", function () {
+
+                if (!customPriceItem) {
+                    return;
+                }
+
+
+                const price =
+                    parseFloat(
+                        document.getElementById("customPriceInput").value
+                    );
+
+
+                if (!price || price <= 0) {
+
+                    alert("Please enter a valid price.");
+
+                    return;
+
+                }
+
+
+                addToCart({
+
+                    productId:
+                        customPriceItem.productId,
+
+                    variantId:
+                        customPriceItem.variantId,
+
+                    productName:
+                        customPriceItem.productName,
+
+                    variantName:
+                        customPriceItem.variantName,
+
+                    price:
+                        price,
+
+                    customPrice:
+                        price
+
+                });
+
+
+                const modalElement =
+                    document.getElementById("customPriceModal");
+
+                const modal =
+                    bootstrap.Modal.getInstance(modalElement);
+
+                modal.hide();
+
+
+                customPriceItem = null;
+
+            });
+
+
+        // =====================================================
+        // ADD TO CART
+        // =====================================================
+
+        function addToCart(item) {
+
+            const existing =
+                cart.find(x =>
+
+                    x.productId === item.productId &&
+
+                    x.variantId === item.variantId &&
+
+                    (
+                        item.customPrice === null ||
+
+                        x.customPrice === item.customPrice
+                    )
+
+                );
+
+
+            if (existing) {
+
+                existing.quantity++;
+
+            }
+            else {
+
+                cart.push({
+
+                    productId:
+                        item.productId,
+
+                    variantId:
+                        item.variantId,
+
+                    productName:
+                        item.productName,
+
+                    variantName:
+                        item.variantName,
+
+                    price:
+                        item.price,
+
+                    customPrice:
+                        item.customPrice,
+
+                    quantity:
+                        1
+
+                });
+
+            }
+
+
+            renderCart();
+
+        }
+
+
+        // =====================================================
+        // RENDER CART
+        // =====================================================
+
+        function renderCart() {
+
+            const container =
+                document.getElementById("cartItems");
+
+
+            container.innerHTML = "";
+
+
+            if (cart.length === 0) {
+
+                container.innerHTML = `
+
+                        <div id="emptyCart"
+                             class="text-center text-muted py-5">
+
+                            <i class="bi bi-cart3"
+                               style="font-size:40px;">
+                            </i>
+
+                            <p class="mt-3 mb-0">
+                                No items added
+                            </p>
+
+                        </div>
+
+                    `;
+
+                document.getElementById("cartCount")
+                    .textContent = "0";
+
+                document.getElementById("subTotal")
+                    .textContent = "0.00";
+
+                document.getElementById("grandTotal")
+                    .textContent = "0.00";
+
+                document.getElementById("checkoutBtn")
+                    .disabled = true;
+
+                return;
+
+            }
+
+
+            let total = 0;
+
+            let itemCount = 0;
+
+
+            cart.forEach(function (item, index) {
+
+                const itemTotal =
+                    item.price * item.quantity;
+
+
+                total += itemTotal;
+
+                itemCount += item.quantity;
+
+
+                const div =
+                    document.createElement("div");
+
+
+                div.className =
+                    "cart-item";
+
+
+                div.innerHTML = `
+
+                        <div class="d-flex justify-content-between">
+
+                            <div>
+
+                                <div class="cart-item-name">
+                                    ${escapeHtml(item.productName)}
+                                </div>
+
+                                <div class="cart-variant">
+                                    ${escapeHtml(item.variantName)}
+                                </div>
+
+                            </div>
+
+
+                            <button type="button"
+                                    class="btn btn-sm btn-link text-danger remove-cart-item"
+                                    data-index="${index}">
+
+                                <i class="bi bi-trash"></i>
+
+                            </button>
+
+                        </div>
+
+
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+
+                            <div class="quantity-control">
+
+                                <button type="button"
+                                        class="btn btn-outline-secondary btn-sm decrease-qty"
+                                        data-index="${index}">
+
+                                    −
+
+                                </button>
+
+
+                                <input type="text"
+                                       class="form-control form-control-sm"
+                                       value="${item.quantity}"
+                                       readonly />
+
+
+                                <button type="button"
+                                        class="btn btn-outline-secondary btn-sm increase-qty"
+                                        data-index="${index}">
+
+                                    +
+
+                                </button>
+
+                            </div>
+
+
+                            <strong>
+                                ${itemTotal.toFixed(2)}
+                            </strong>
+
+                        </div>
+
+                    `;
+
+
+                container.appendChild(div);
+
+            });
+
+
+            document.getElementById("cartCount")
+                .textContent = itemCount;
+
+
+            document.getElementById("subTotal")
+                .textContent = total.toFixed(2);
+
+
+            document.getElementById("grandTotal")
+                .textContent = total.toFixed(2);
+
+
+            document.getElementById("checkoutBtn")
+                .disabled = false;
+
+
+            // Increase quantity
+
+            document.querySelectorAll(".increase-qty")
+                .forEach(function (button) {
+
+                    button.addEventListener("click", function () {
+
+                        const index =
+                            parseInt(this.dataset.index);
+
+                        cart[index].quantity++;
+
+                        renderCart();
+
+                    });
+
+                });
+
+
+            // Decrease quantity
+
+            document.querySelectorAll(".decrease-qty")
+                .forEach(function (button) {
+
+                    button.addEventListener("click", function () {
+
+                        const index =
+                            parseInt(this.dataset.index);
+
+
+                        if (cart[index].quantity > 1) {
+
+                            cart[index].quantity--;
+
+                        }
+                        else {
+
+                            cart.splice(index, 1);
+
+                        }
+
+
+                        renderCart();
+
+                    });
+
+                });
+
+
+            // Remove
+
+            document.querySelectorAll(".remove-cart-item")
+                .forEach(function (button) {
+
+                    button.addEventListener("click", function () {
+
+                        const index =
+                            parseInt(this.dataset.index);
+
+                        cart.splice(index, 1);
+
+                        renderCart();
+
+                    });
+
+                });
+
+        }
+
+
+        // =====================================================
+        // CLEAR CART
+        // =====================================================
+
+        document.getElementById("clearCartBtn")
+            .addEventListener("click", function () {
+
+                if (cart.length === 0) {
+                    return;
+                }
+
+
+                if (!confirm("Clear the current order?")) {
+                    return;
+                }
+
+
+                cart = [];
+
+                renderCart();
+
+            });
+
+
+        // =====================================================
+        // CHECKOUT
+        // =====================================================
+
+        document.getElementById("checkoutBtn")
+            .addEventListener("click", async function () {
+
+                if (cart.length === 0) {
+
+                    alert("Please add at least one item.");
+
+                    return;
+
+                }
+
+
+                const button = this;
+
+
+                button.disabled = true;
+
+                button.innerHTML = `
+
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+
+                        Saving...
+
+                    `;
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            "@Url.Action("Save", "Invoice")",
+                            {
+
+                                method: "POST",
+
+                                headers: {
+
+                                    "Content-Type":
+                                        "application/json"
+
+                                },
+
+                                body: JSON.stringify({
+
+                                    items:
+                                        cart.map(item => ({
+
+                                            foodItemVariantId:
+                                                item.variantId,
+
+                                            quantity:
+                                                item.quantity,
+
+                                            customPrice:
+                                                item.customPrice
+
+                                        }))
+
+                                })
+
+                            }
+                        );
+
+
+                    if (!response.ok) {
+
+                        const errorText =
+                            await response.text();
+
+                        throw new Error(
+                            errorText ||
+                            "Failed to save invoice."
+                        );
+
+                    }
+
+
+                    const result =
+                        await response.json();
+
+
+                    if (result.success) {
+
+                        window.location.href =
+                            "@Url.Action("Details", "Invoice")" +
+                            "?id=" +
+                            result.invoiceId;
+
+                    }
+                    else {
+
+                        throw new Error(
+                            "Invoice could not be saved."
+                        );
+
+                    }
+
+                }
+                catch (error) {
+
+                    console.error(error);
+
+                    alert(
+                        error.message ||
+                        "Something went wrong."
+                    );
+
+
+                    button.disabled = false;
+
+                    button.innerHTML = `
+
+                            <i class="bi bi-check-circle"></i>
+
+                            Checkout
+
+                        `;
+
+                }
+
+            });
+
+
+        // =====================================================
+        // HTML ESCAPE
+        // =====================================================
+
+        function escapeHtml(value) {
+
+            return String(value)
+
+                .replace(/&/g, "&amp;")
+
+                .replace(/</g, "&lt;")
+
+                .replace(/>/g, "&gt;")
+
+                .replace(/"/g, "&quot;")
+
+                .replace(/'/g, "&#039;");
+
+        }
+
+
+        // Initial render
+
+        renderCart();
+
+    </script>
+
+}

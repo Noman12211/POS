@@ -22,6 +22,14 @@ namespace POS.Controllers
 
             return View(items);
         }
+        public async Task<IActionResult> QuickInvoice()
+        {
+            var items = await _context.FoodItems
+                .Where(x => x.IsActive)
+                .ToListAsync();
+
+            return View(items);
+        }
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
