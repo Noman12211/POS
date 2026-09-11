@@ -1,40 +1,52 @@
-﻿
-@model IEnumerable<POS.Models.FoodItem>
-
+﻿@model IEnumerable<POS.Models.FoodItem>
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "POS";
 
-    var foodItems = Model
-        .Where(x => x.IsActive)
-        .ToList();
+    var foodItems = Model.Where(x => x.IsActive).ToList();
 }
 
 <div class="container-fluid">
 
+    <!-- ================================================= -->
     <!-- HEADER -->
+    <!-- ================================================= -->
+
     <div class="d-flex justify-content-between align-items-center mb-4">
 
         <div>
             <h2 class="mb-1">POS</h2>
+
             <p class="text-muted mb-0">
                 Select products to create an order
             </p>
         </div>
 
+
         <div>
+
             <button type="button"
                     id="clearCartBtn"
                     class="btn btn-outline-danger">
+
                 <i class="bi bi-trash"></i>
+
                 Clear Cart
+
             </button>
+
         </div>
 
     </div>
 
 
+
+    <!-- ================================================= -->
+    <!-- MAIN CONTENT -->
+    <!-- ================================================= -->
+
     <div class="row g-4">
+
 
         <!-- ================================================= -->
         <!-- PRODUCTS -->
@@ -53,11 +65,15 @@
                             <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
 
                                 <div class="card product-card h-100"
-                                     data-id="@item.Id">
+                                     data-id="@item.Id"
+                                     data-product-name="@item.Name">
 
-                                    <!-- IMAGE -->
 
-                                    <div class="product-image-container">
+                                    <!-- ================================= -->
+                                    <!-- PRODUCT IMAGE -->
+                                    <!-- ================================= -->
+
+                                    <div class="product-image-container product-click-area">
 
                                         @if (!string.IsNullOrEmpty(item.ImagePath))
                                         {
@@ -68,70 +84,54 @@
                                         else
                                         {
                                             <div class="no-image">
+
                                                 <i class="bi bi-image"></i>
+
                                             </div>
                                         }
 
                                     </div>
 
 
-                                    <!-- PRODUCT INFO -->
+
+                                    <!-- ================================= -->
+                                    <!-- PRODUCT NAME -->
+                                    <!-- ================================= -->
 
                                     <div class="card-body text-center">
 
-                                        <h6 class="product-name mb-2">
+                                        <h6 class="product-name mb-0">
+
                                             @item.Name
+
                                         </h6>
 
+                                    </div>
 
-                                        @if (item.Variants != null &&
-                                       item.Variants.Any(v => v.IsActive))
+
+
+                                    <!-- ================================= -->
+                                    <!-- HIDDEN VARIANT DATA -->
+                                    <!-- ================================= -->
+
+                                    <div class="product-variant-data d-none">
+
+                                        @if (item.Variants != null)
                                         {
-                                            <div class="product-variants">
-
-                                                @foreach (var variant in item.Variants
-                                               .Where(v => v.IsActive)
-                                               .OrderBy(v => v.Price))
-                                                {
-                                                    <button type="button"
-                                                            class="btn btn-sm btn-outline-primary variant-btn"
-                                                            data-product-id="@item.Id"
-                                                            data-variant-id="@variant.Id"
-                                                            data-product-name="@item.Name"
-                                                            data-variant-name="@variant.VariantName"
-                                                            data-price="@variant.Price"
-                                                            data-custom="@variant.IsCustomPrice">
-
-                                                        @variant.VariantName
-
-                                                        @if (!variant.IsCustomPrice)
-                                                        {
-                                                            <span>
-                                                                - @variant.Price.ToString("0.00")
-                                                            </span>
-                                                        }
-                                                        else
-                                                        {
-                                                            <span>
-                                                                - Custom
-                                                            </span>
-                                                        }
-
-                                                    </button>
-                                                }
-
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            <button type="button"
-                                                    class="btn btn-primary btn-sm w-100 product-btn"
-                                                    data-product-id="@item.Id"
-                                                    data-product-name="@item.Name">
-
-                                                Add
-
-                                            </button>
+                                            foreach (var variant in item.Variants
+                                            .Where(v => v.IsActive)
+                                            .OrderBy(v => v.Price))
+                                            {
+                                                <button type="button"
+                                                        class="variant-data-item"
+                                                        data-product-id="@item.Id"
+                                                        data-variant-id="@variant.Id"
+                                                        data-product-name="@item.Name"
+                                                        data-variant-name="@variant.VariantName"
+                                                        data-price="@variant.Price"
+                                                        data-custom="@variant.IsCustomPrice">
+                                                </button>
+                                            }
                                         }
 
                                     </div>
@@ -150,6 +150,7 @@
         </div>
 
 
+
         <!-- ================================================= -->
         <!-- CART -->
         <!-- ================================================= -->
@@ -160,21 +161,34 @@
 
                 <div class="card-body">
 
+
+                    <!-- ================================= -->
+                    <!-- CART HEADER -->
+                    <!-- ================================= -->
+
                     <div class="d-flex justify-content-between align-items-center mb-3">
 
                         <h5 class="mb-0">
+
                             Current Order
+
                         </h5>
+
 
                         <span class="badge bg-primary"
                               id="cartCount">
+
                             0
+
                         </span>
 
                     </div>
 
 
+
+                    <!-- ================================= -->
                     <!-- CART ITEMS -->
+                    <!-- ================================= -->
 
                     <div id="cartItems">
 
@@ -185,8 +199,11 @@
                                style="font-size:40px;">
                             </i>
 
+
                             <p class="mt-3 mb-0">
+
                                 No items added
+
                             </p>
 
                         </div>
@@ -194,31 +211,46 @@
                     </div>
 
 
+
+                    <!-- ================================= -->
                     <!-- TOTAL -->
+                    <!-- ================================= -->
 
                     <div class="border-top mt-3 pt-3">
+
 
                         <div class="d-flex justify-content-between mb-2">
 
                             <span>
+
                                 Sub Total
+
                             </span>
 
+
                             <strong id="subTotal">
+
                                 0.00
+
                             </strong>
 
                         </div>
 
 
+
                         <div class="d-flex justify-content-between fs-5">
 
                             <strong>
+
                                 Grand Total
+
                             </strong>
 
+
                             <strong id="grandTotal">
+
                                 0.00
+
                             </strong>
 
                         </div>
@@ -226,7 +258,10 @@
                     </div>
 
 
+
+                    <!-- ================================= -->
                     <!-- CHECKOUT -->
+                    <!-- ================================= -->
 
                     <button type="button"
                             id="checkoutBtn"
@@ -250,40 +285,184 @@
 </div>
 
 
+
+<!-- ===================================================== -->
+<!-- VARIANT SELECTION MODAL -->
+<!-- ===================================================== -->
+
+<div class="modal fade"
+     id="variantModal"
+     tabindex="-1"
+     aria-labelledby="variantModalLabel"
+     aria-hidden="true">
+
+
+    <div class="modal-dialog modal-dialog-centered">
+
+
+        <div class="modal-content">
+
+
+            <!-- ============================================= -->
+            <!-- MODAL HEADER -->
+            <!-- ============================================= -->
+
+            <div class="modal-header">
+
+
+                <div>
+
+                    <h5 class="modal-title"
+                        id="variantModalLabel">
+
+                        Select Variant
+
+                    </h5>
+
+
+                    <small class="text-muted"
+                           id="variantProductName">
+
+                    </small>
+
+                </div>
+
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
+                </button>
+
+            </div>
+
+
+
+            <!-- ============================================= -->
+            <!-- MODAL BODY -->
+            <!-- ============================================= -->
+
+            <div class="modal-body">
+
+
+                <div id="variantList"
+                     class="variant-modal-list">
+                </div>
+
+
+
+                <!-- ========================================= -->
+                <!-- NO VARIANTS -->
+                <!-- ========================================= -->
+
+                <div id="noVariantsMessage"
+                     class="text-center text-muted py-4 d-none">
+
+
+                    <i class="bi bi-exclamation-circle fs-3">
+                    </i>
+
+
+                    <p class="mt-2 mb-0">
+
+                        No variants available for this product.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- ============================================= -->
+            <!-- MODAL FOOTER -->
+            <!-- ============================================= -->
+
+            <div class="modal-footer">
+
+
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+
+                    Close
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
 <!-- ===================================================== -->
 <!-- CUSTOM PRICE MODAL -->
 <!-- ===================================================== -->
 
 <div class="modal fade"
      id="customPriceModal"
-     tabindex="-1">
+     tabindex="-1"
+     aria-labelledby="customPriceModalLabel"
+     aria-hidden="true">
+
 
     <div class="modal-dialog modal-dialog-centered">
 
+
         <div class="modal-content">
+
+
+            <!-- ============================================= -->
+            <!-- MODAL HEADER -->
+            <!-- ============================================= -->
 
             <div class="modal-header">
 
-                <h5 class="modal-title">
+
+                <h5 class="modal-title"
+                    id="customPriceModalLabel">
+
                     Enter Custom Price
+
                 </h5>
+
 
                 <button type="button"
                         class="btn-close"
-                        data-bs-dismiss="modal">
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
                 </button>
 
             </div>
 
+
+
+            <!-- ============================================= -->
+            <!-- MODAL BODY -->
+            <!-- ============================================= -->
+
             <div class="modal-body">
 
+
                 <p class="mb-3">
+
                     <strong id="customProductName"></strong>
+
                 </p>
 
-                <label class="form-label">
+
+                <label for="customPriceInput"
+                       class="form-label">
+
                     Price
+
                 </label>
+
 
                 <input type="number"
                        id="customPriceInput"
@@ -294,18 +473,30 @@
 
             </div>
 
+
+
+            <!-- ============================================= -->
+            <!-- MODAL FOOTER -->
+            <!-- ============================================= -->
+
             <div class="modal-footer">
+
 
                 <button type="button"
                         class="btn btn-secondary"
                         data-bs-dismiss="modal">
+
                     Cancel
+
                 </button>
+
 
                 <button type="button"
                         class="btn btn-primary"
                         id="confirmCustomPrice">
+
                     Add Item
+
                 </button>
 
             </div>
@@ -320,7 +511,7 @@
 <style>
 
     /* ============================================= */
-    /* PRODUCT CARD */
+    /* GENERAL PRODUCT AREA */
     /* ============================================= */
 
     .product-card {
@@ -329,26 +520,42 @@
         overflow: hidden;
         cursor: pointer;
         transition: all 0.2s ease;
+        background: #fff;
     }
 
-        .product-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-        }
+    .product-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        border-color: #d0d7de;
+    }
 
+
+    /* ============================================= */
+    /* PRODUCT IMAGE */
+    /* ============================================= */
 
     .product-image-container {
         height: 160px;
         background: #f8f9fa;
         overflow: hidden;
+        cursor: pointer;
     }
 
     .product-image {
         width: 100%;
         height: 100%;
         object-fit: cover;
+        transition: transform 0.25s ease;
     }
 
+    .product-card:hover .product-image {
+        transform: scale(1.04);
+    }
+
+
+    /* ============================================= */
+    /* NO IMAGE */
+    /* ============================================= */
 
     .no-image {
         width: 100%;
@@ -358,24 +565,193 @@
         justify-content: center;
         color: #adb5bd;
         font-size: 45px;
+        background: #f8f9fa;
     }
 
+
+    /* ============================================= */
+    /* PRODUCT NAME */
+    /* ============================================= */
 
     .product-name {
         font-weight: 600;
         min-height: 22px;
+        color: #212529;
     }
 
 
-    .product-variants {
+    /* ============================================= */
+    /* VARIANT MODAL */
+    /* ============================================= */
+
+    .variant-modal-list {
         display: flex;
         flex-direction: column;
-        gap: 5px;
+        gap: 10px;
+        max-height: 400px;
+        overflow-y: auto;
+        padding-right: 3px;
     }
 
 
-    .variant-btn {
+    /* Variant scrollbar */
+
+    .variant-modal-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .variant-modal-list::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .variant-modal-list::-webkit-scrollbar-thumb {
+        background: #c7c7c7;
+        border-radius: 10px;
+    }
+
+    .variant-modal-list::-webkit-scrollbar-thumb:hover {
+        background: #999;
+    }
+
+
+    /* ============================================= */
+    /* VARIANT BUTTON */
+    /* ============================================= */
+
+    .variant-modal-btn {
         width: 100%;
+        min-height: 55px;
+
+        border: 1px solid #dee2e6;
+        background: #ffffff;
+
+        border-radius: 10px;
+
+        padding: 13px 16px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        text-align: left;
+
+        cursor: pointer;
+
+        transition: all 0.2s ease;
+    }
+
+
+    .variant-modal-btn:hover {
+        border-color: #0d6efd;
+        background: #f0f6ff;
+
+        transform: translateY(-1px);
+
+        box-shadow: 0 4px 10px rgba(13, 110, 253, 0.08);
+    }
+
+
+    .variant-modal-btn:active {
+        transform: scale(0.98);
+    }
+
+
+    /* ============================================= */
+    /* VARIANT NAME */
+    /* ============================================= */
+
+    .variant-modal-btn .variant-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: #212529;
+    }
+
+
+    /* ============================================= */
+    /* VARIANT PRICE */
+    /* ============================================= */
+
+    .variant-modal-btn .variant-price {
+        font-size: 14px;
+        font-weight: 600;
+        color: #0d6efd;
+
+        white-space: nowrap;
+
+        margin-left: 15px;
+    }
+
+
+    /* ============================================= */
+    /* CUSTOM PRICE VARIANT */
+    /* ============================================= */
+
+    .variant-modal-btn.custom-price {
+        border-color: #ffc107;
+        background: #fffdf5;
+    }
+
+    .variant-modal-btn.custom-price:hover {
+        border-color: #ffca2c;
+        background: #fff8dc;
+    }
+
+    .variant-modal-btn.custom-price .variant-price {
+        color: #856404;
+    }
+
+
+    /* ============================================= */
+    /* VARIANT MODAL HEADER */
+    /* ============================================= */
+
+    #variantModal .modal-header {
+        border-bottom: 1px solid #e9ecef;
+        padding: 16px 20px;
+    }
+
+
+    #variantModal .modal-title {
+        font-weight: 600;
+        margin-bottom: 2px;
+    }
+
+
+    #variantProductName {
+        font-size: 13px;
+    }
+
+
+    /* ============================================= */
+    /* VARIANT MODAL BODY */
+    /* ============================================= */
+
+    #variantModal .modal-body {
+        padding: 20px;
+    }
+
+
+    /* ============================================= */
+    /* VARIANT MODAL FOOTER */
+    /* ============================================= */
+
+    #variantModal .modal-footer {
+        border-top: 1px solid #e9ecef;
+        padding: 12px 20px;
+    }
+
+
+    /* ============================================= */
+    /* NO VARIANTS MESSAGE */
+    /* ============================================= */
+
+    #noVariantsMessage {
+        padding: 30px 15px !important;
+    }
+
+    #noVariantsMessage i {
+        color: #adb5bd;
     }
 
 
@@ -395,21 +771,27 @@
     }
 
 
-        .cart-item:last-child {
-            border-bottom: none;
-        }
+    .cart-item:last-child {
+        border-bottom: none;
+    }
 
 
     .cart-item-name {
         font-weight: 600;
+        color: #212529;
     }
 
 
     .cart-variant {
         font-size: 13px;
         color: #6c757d;
+        margin-top: 2px;
     }
 
+
+    /* ============================================= */
+    /* QUANTITY CONTROL */
+    /* ============================================= */
 
     .quantity-control {
         display: flex;
@@ -418,338 +800,858 @@
     }
 
 
-        .quantity-control button {
-            width: 28px;
-            height: 28px;
-            padding: 0;
-        }
+    .quantity-control button {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 
 
-        .quantity-control input {
-            width: 45px;
-            text-align: center;
+    .quantity-control input {
+        width: 45px;
+        text-align: center;
+    }
+
+
+    /* ============================================= */
+    /* CART EMPTY STATE */
+    /* ============================================= */
+
+    #emptyCart {
+        color: #6c757d;
+    }
+
+
+    #emptyCart i {
+        color: #adb5bd;
+    }
+
+
+    /* ============================================= */
+    /* CHECKOUT BUTTON */
+    /* ============================================= */
+
+    #checkoutBtn {
+        min-height: 45px;
+        font-weight: 600;
+    }
+
+
+    /* ============================================= */
+    /* CUSTOM PRICE MODAL */
+    /* ============================================= */
+
+    #customPriceModal .modal-title {
+        font-weight: 600;
+    }
+
+
+    #customPriceInput {
+        font-size: 16px;
+    }
+
+
+    /* ============================================= */
+    /* TOAST */
+    /* ============================================= */
+
+    .toast {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+
+    /* ============================================= */
+    /* MOBILE RESPONSIVE */
+    /* ============================================= */
+
+    @@media (max-width: 767.98px) {
+
+        .product-image-container {
+            height: 140px;
         }
+
+        .product-name {
+            font-size: 14px;
+        }
+
+        .sticky-cart {
+            position: static;
+        }
+
+        .variant-modal-list {
+            max-height: 350px;
+        }
+
+    }
+
+
+    /* ============================================= */
+    /* SMALL MOBILE */
+    /* ============================================= */
+
+    @@media (max-width: 575.98px) {
+
+        .product-image-container {
+            height: 130px;
+        }
+
+        #variantModal .modal-body {
+            padding: 15px;
+        }
+
+        #variantModal .modal-header {
+            padding: 14px 15px;
+        }
+
+        #variantModal .modal-footer {
+            padding: 10px 15px;
+        }
+
+        .variant-modal-btn {
+            min-height: 50px;
+            padding: 11px 13px;
+        }
+
+        .variant-modal-btn .variant-name {
+            font-size: 14px;
+        }
+
+        .variant-modal-btn .variant-price {
+            font-size: 13px;
+        }
+
+    }
 
 </style>
 
 
+
 @section Scripts {
+
+    <!-- ===================================================== -->
+    <!-- QZ TRAY -->
+    <!-- ===================================================== -->
+
     <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.js"></script>
+
     <script>
+
         // ==========================================================
         // QZ TRAY CONFIG
         // ==========================================================
 
-        // Change this to match the exact printer name registered
-        // in QZ Tray / Windows (Control Panel > Printers).
-        const THERMAL_PRINTER_NAME = "XP-58"; // <-- CHANGE THIS
+        // Change this to match your exact thermal printer name.
+        const THERMAL_PRINTER_NAME = "XP-58";
 
-        // Minimal "unsigned" trust setup — QZ Tray must be configured
-        // to allow unsigned connections for this to work.
-        // For production, replace these two promises with calls to a
-        // backend endpoint that signs the request with your private key.
+
+        // Minimal unsigned trust setup.
+        // For production, use a backend certificate/signature.
         qz.security.setCertificatePromise(function (resolve) {
-            resolve(""); // no cert (trust-on-first-use)
+            resolve("");
         });
+
 
         qz.security.setSignaturePromise(function () {
+
             return function (resolve) {
-                resolve(""); // no signature
+                resolve("");
             };
+
         });
 
+
+        // ==========================================================
+        // QZ TRAY CONNECTION
+        // ==========================================================
+
         async function ensureQzConnected() {
+
             if (!qz.websocket.isActive()) {
+
                 await qz.websocket.connect();
+
             }
+
+        }
+
+
+        // ==========================================================
+        // BUILD RECEIPT
+        // ==========================================================
+
+        function buildReceiptData(cart, invoiceId, total) {
+
+            const ESC = "\x1B";
+            const GS = "\x1D";
+
+            const line =
+                "--------------------------------\n";
+
+            let receipt = "";
+
+
+            // Initialize printer
+            receipt += ESC + "@@";
+
+
+            // Center
+            receipt += ESC + "a" + "\x01";
+
+
+            // Double height / width
+            receipt += ESC + "!" + "\x18";
+
+            receipt += "MY STORE NAME\n";
+
+
+            // Normal text
+            receipt += ESC + "!" + "\x00";
+
+            receipt +=
+                "Invoice #" +
+                invoiceId +
+                "\n";
+
+            receipt +=
+                new Date().toLocaleString() +
+                "\n";
+
+            receipt += line;
+
+
+            // Left align
+            receipt += ESC + "a" + "\x00";
+
+
+            // Cart items
+            cart.forEach(function (item) {
+
+                const name =
+                    item.productName +
+                    " (" +
+                    item.variantName +
+                    ")";
+
+
+                const qtyPrice =
+                    item.quantity +
+                    " x " +
+                    item.price.toFixed(2);
+
+
+                const lineTotal =
+                    (
+                        item.quantity *
+                        item.price
+                    ).toFixed(2);
+
+
+                receipt +=
+                    name +
+                    "\n";
+
+
+                receipt +=
+                    qtyPrice.padEnd(20, " ") +
+                    lineTotal.padStart(12, " ") +
+                    "\n";
+
+            });
+
+
+            receipt += line;
+
+
+            // Bold total
+            receipt += ESC + "!" + "\x10";
+
+
+            receipt +=
+                "TOTAL".padEnd(20, " ") +
+                total.toFixed(2).padStart(12, " ") +
+                "\n";
+
+
+            // Normal
+            receipt += ESC + "!" + "\x00";
+
+
+            // Feed
+            receipt += "\n\n\n";
+
+
+            // Cut paper
+            receipt +=
+                GS +
+                "V" +
+                "\x00";
+
+
+            return [
+                {
+                    type: "raw",
+                    format: "plain",
+                    flavor: "plain",
+                    data: receipt
+                }
+            ];
+
+        }
+
+
+        // ==========================================================
+        // PRINT RECEIPT
+        // ==========================================================
+
+        async function printReceipt(
+            cart,
+            invoiceId,
+            total
+        ) {
+
+            await ensureQzConnected();
+
+
+            const config =
+                qz.configs.create(
+                    THERMAL_PRINTER_NAME
+                );
+
+
+            const data =
+                buildReceiptData(
+                    cart,
+                    invoiceId,
+                    total
+                );
+
+
+            await qz.print(
+                config,
+                data
+            );
+
         }
 
 
 
-        function buildReceiptData(cart, invoiceId, total) {
-
-    const ESC = "\x1B";
-    const GS = "\x1D";
-    const line = "--------------------------------\n";
-
-    let receipt = "";
-
-    receipt += ESC + "@@";
-    receipt += ESC + "a" + "\x01";     // center align
-    receipt += ESC + "!" + "\x18";     // double height/width
-    receipt += "MY STORE NAME\n";
-    receipt += ESC + "!" + "\x00";     // normal text
-    receipt += "Invoice #" + invoiceId + "\n";
-    receipt += new Date().toLocaleString() + "\n";
-    receipt += line;
-
-    receipt += ESC + "a" + "\x00";     // left align
-
-    cart.forEach(function (item) {
-        const name = item.productName + " (" + item.variantName + ")";
-        const qtyPrice = item.quantity + " x " + item.price.toFixed(2);
-        const lineTotal = (item.quantity * item.price).toFixed(2);
-
-        receipt += name + "\n";
-        receipt += qtyPrice.padEnd(20, " ") + lineTotal.padStart(12, " ") + "\n";
-    });
-
-    receipt += line;
-    receipt += ESC + "!" + "\x10";     // bold
-    receipt += ("TOTAL").padEnd(20, " ") + total.toFixed(2).padStart(12, " ") + "\n";
-    receipt += ESC + "!" + "\x00";
-    receipt += "\n\n\n";
-
-    receipt += GS + "V" + "\x00";      // full cut
-
-    return [{
-        type: "raw",
-        format: "plain",
-        flavor: "plain",
-        data: receipt
-    }];
-}
-
-
-async function printReceipt(cart, invoiceId, total) {
-    await ensureQzConnected();
-
-    const config = qz.configs.create(THERMAL_PRINTER_NAME);
-    const data = buildReceiptData(cart, invoiceId, total);
-
-    await qz.print(config, data);
-}
-
-
-
-
-
-        // =====================================================
+        // ==========================================================
         // CART
-        // =====================================================
+        // ==========================================================
 
         let cart = [];
 
 
         // Used when entering custom price
-
         let customPriceItem = null;
 
 
-        // =====================================================
-        // VARIANT BUTTONS
-        // =====================================================
 
-        document.querySelectorAll(".variant-btn")
-            .forEach(function (button) {
+        // ==========================================================
+        // VARIANT MODAL ELEMENTS
+        // ==========================================================
 
-                button.addEventListener("click", function () {
-
-                    const productId =
-                        parseInt(this.dataset.productId);
-
-                    const variantId =
-                        parseInt(this.dataset.variantId);
-
-                    const productName =
-                        this.dataset.productName;
-
-                    const variantName =
-                        this.dataset.variantName;
-
-                    const price =
-                        parseFloat(this.dataset.price);
-
-                    const isCustom =
-                        this.dataset.custom === "true";
+        const variantModalElement =
+            document.getElementById(
+                "variantModal"
+            );
 
 
-                    // Custom price
-
-                    if (isCustom) {
-
-                        customPriceItem = {
-
-                            productId: productId,
-
-                            variantId: variantId,
-
-                            productName: productName,
-
-                            variantName: variantName
-
-                        };
+        const variantModal =
+            new bootstrap.Modal(
+                variantModalElement
+            );
 
 
-                        document.getElementById("customProductName")
-                            .textContent =
-                            productName + " - " + variantName;
+        const variantList =
+            document.getElementById(
+                "variantList"
+            );
 
 
-                        document.getElementById("customPriceInput")
-                            .value = "";
+        const noVariantsMessage =
+            document.getElementById(
+                "noVariantsMessage"
+            );
 
 
-                        const modal =
-                            new bootstrap.Modal(
-                                document.getElementById("customPriceModal")
+        const variantProductName =
+            document.getElementById(
+                "variantProductName"
+            );
+
+
+
+        // ==========================================================
+        // PRODUCT IMAGE CLICK
+        // ==========================================================
+
+        document
+            .querySelectorAll(".product-click-area")
+            .forEach(function (imageArea) {
+
+                imageArea.addEventListener(
+                    "click",
+                    function () {
+
+                        const productCard =
+                            this.closest(
+                                ".product-card"
                             );
 
-                        modal.show();
 
-                        setTimeout(function () {
+                        if (!productCard) {
+                            return;
+                        }
 
-                            document.getElementById("customPriceInput")
-                                .focus();
 
-                        }, 300);
+                        openVariantModal(
+                            productCard
+                        );
 
+                    }
+                );
+
+            });
+
+
+
+        // ==========================================================
+        // OPEN VARIANT MODAL
+        // ==========================================================
+
+        function openVariantModal(
+            productCard
+        ) {
+
+            const productName =
+                productCard.dataset.productName;
+
+
+            // Set product name
+            variantProductName.textContent =
+                productName;
+
+
+            // Clear previous variants
+            variantList.innerHTML = "";
+
+
+            // Hide "no variants"
+            noVariantsMessage.classList.add(
+                "d-none"
+            );
+
+
+            // Get hidden variant data
+            const variants =
+                productCard.querySelectorAll(
+                    ".variant-data-item"
+                );
+
+
+            // ==================================================
+            // NO VARIANTS
+            // ==================================================
+
+            if (variants.length === 0) {
+
+                noVariantsMessage.classList.remove(
+                    "d-none"
+                );
+
+
+                variantModal.show();
+
+                return;
+            }
+
+
+
+            // ==================================================
+            // CREATE VARIANT BUTTONS
+            // ==================================================
+
+            variants.forEach(
+                function (variant) {
+
+                    const productId =
+                        parseInt(
+                            variant.dataset.productId
+                        );
+
+
+                    const variantId =
+                        parseInt(
+                            variant.dataset.variantId
+                        );
+
+
+                    const productName =
+                        variant.dataset.productName;
+
+
+                    const variantName =
+                        variant.dataset.variantName;
+
+
+                    const price =
+                        parseFloat(
+                            variant.dataset.price
+                        );
+
+
+                    const isCustom =
+                        variant.dataset.custom === "true";
+
+
+
+                    // Create button
+                    const button =
+                        document.createElement(
+                            "button"
+                        );
+
+
+                    button.type =
+                        "button";
+
+
+                    button.className =
+                        "variant-modal-btn" +
+                        (
+                            isCustom
+                                ? " custom-price"
+                                : ""
+                        );
+
+
+
+                    // Price text
+                    const priceText =
+                        isCustom
+                            ? "Custom Price"
+                            : price.toFixed(2);
+
+
+
+                    // Button HTML
+                    button.innerHTML = `
+
+                        <span class="variant-name">
+                            ${escapeHtml(variantName)}
+                        </span>
+
+                        <span class="variant-price">
+                            ${escapeHtml(priceText)}
+                        </span>
+
+                    `;
+
+
+
+                    // ==================================================
+                    // VARIANT CLICK
+                    // ==================================================
+
+                    button.addEventListener(
+                        "click",
+                        function () {
+
+
+                            // ==========================================
+                            // CUSTOM PRICE
+                            // ==========================================
+
+                            if (isCustom) {
+
+                                customPriceItem = {
+
+                                    productId:
+                                        productId,
+
+                                    variantId:
+                                        variantId,
+
+                                    productName:
+                                        productName,
+
+                                    variantName:
+                                        variantName
+
+                                };
+
+
+                                document
+                                    .getElementById(
+                                        "customProductName"
+                                    )
+                                    .textContent =
+                                        productName +
+                                        " - " +
+                                        variantName;
+
+
+                                document
+                                    .getElementById(
+                                        "customPriceInput"
+                                    )
+                                    .value = "";
+
+
+                                // Close variant modal
+                                variantModal.hide();
+
+
+                                // Wait for first modal to close
+                                // before opening second modal.
+                                setTimeout(
+                                    function () {
+
+                                        const customModalElement =
+                                            document.getElementById(
+                                                "customPriceModal"
+                                            );
+
+
+                                        const customModal =
+                                            bootstrap.Modal.getOrCreateInstance(
+                                                customModalElement
+                                            );
+
+
+                                        customModal.show();
+
+
+                                        // Focus input
+                                        setTimeout(
+                                            function () {
+
+                                                document
+                                                    .getElementById(
+                                                        "customPriceInput"
+                                                    )
+                                                    .focus();
+
+                                            },
+                                            300
+                                        );
+
+                                    },
+                                    300
+                                );
+
+
+                                return;
+                            }
+
+
+
+                            // ==========================================
+                            // NORMAL PRICE
+                            // ==========================================
+
+                            addToCart({
+
+                                productId:
+                                    productId,
+
+                                variantId:
+                                    variantId,
+
+                                productName:
+                                    productName,
+
+                                variantName:
+                                    variantName,
+
+                                price:
+                                    price,
+
+                                customPrice:
+                                    null
+
+                            });
+
+
+                            // Close variant modal
+                            variantModal.hide();
+
+                        }
+                    );
+
+
+                    // Add button to modal
+                    variantList.appendChild(
+                        button
+                    );
+
+                }
+            );
+
+
+            // Show modal
+            variantModal.show();
+
+        }
+
+
+
+        // ==========================================================
+        // CUSTOM PRICE CONFIRM
+        // ==========================================================
+
+        document
+            .getElementById(
+                "confirmCustomPrice"
+            )
+            .addEventListener(
+                "click",
+                function () {
+
+                    // No selected item
+                    if (!customPriceItem) {
+                        return;
+                    }
+
+
+                    const input =
+                        document.getElementById(
+                            "customPriceInput"
+                        );
+
+
+                    const price =
+                        parseFloat(
+                            input.value
+                        );
+
+
+                    // Validate price
+                    if (
+                        !price ||
+                        price <= 0
+                    ) {
+
+                        alert(
+                            "Please enter a valid price."
+                        );
+
+                        input.focus();
 
                         return;
+                    }
+
+
+
+                    // Add item to cart
+                    addToCart({
+
+                        productId:
+                            customPriceItem.productId,
+
+                        variantId:
+                            customPriceItem.variantId,
+
+                        productName:
+                            customPriceItem.productName,
+
+                        variantName:
+                            customPriceItem.variantName,
+
+                        price:
+                            price,
+
+                        customPrice:
+                            price
+
+                    });
+
+
+
+                    // Close custom price modal
+                    const modalElement =
+                        document.getElementById(
+                            "customPriceModal"
+                        );
+
+
+                    const modal =
+                        bootstrap.Modal.getInstance(
+                            modalElement
+                        );
+
+
+                    if (modal) {
+
+                        modal.hide();
 
                     }
 
 
-                    addToCart({
-
-                        productId: productId,
-
-                        variantId: variantId,
-
-                        productName: productName,
-
-                        variantName: variantName,
-
-                        price: price,
-
-                        customPrice: null
-
-                    });
-
-                });
-
-            });
-
-
-        // =====================================================
-        // PRODUCTS WITHOUT VARIANTS
-        // =====================================================
-
-        document.querySelectorAll(".product-btn")
-            .forEach(function (button) {
-
-                button.addEventListener("click", function () {
-
-                    const productId =
-                        parseInt(this.dataset.productId);
-
-                    const productName =
-                        this.dataset.productName;
-
-
-                    // If your database requires a variant,
-                    // products should normally have variants.
-
-                    alert(
-                        "Please add a variant for this product."
-                    );
-
-                });
-
-            });
-
-
-        // =====================================================
-        // CONFIRM CUSTOM PRICE
-        // =====================================================
-
-        document.getElementById("confirmCustomPrice")
-            .addEventListener("click", function () {
-
-                if (!customPriceItem) {
-                    return;
-                }
-
-
-                const price =
-                    parseFloat(
-                        document.getElementById("customPriceInput").value
-                    );
-
-
-                if (!price || price <= 0) {
-
-                    alert("Please enter a valid price.");
-
-                    return;
+                    // Clear selected custom item
+                    customPriceItem = null;
 
                 }
+            );
 
 
-                addToCart({
 
-                    productId:
-                        customPriceItem.productId,
-
-                    variantId:
-                        customPriceItem.variantId,
-
-                    productName:
-                        customPriceItem.productName,
-
-                    variantName:
-                        customPriceItem.variantName,
-
-                    price:
-                        price,
-
-                    customPrice:
-                        price
-
-                });
-
-
-                const modalElement =
-                    document.getElementById("customPriceModal");
-
-                const modal =
-                    bootstrap.Modal.getInstance(modalElement);
-
-                modal.hide();
-
-
-                customPriceItem = null;
-
-            });
-
-
-        // =====================================================
+        // ==========================================================
         // ADD TO CART
-        // =====================================================
+        // ==========================================================
 
         function addToCart(item) {
 
             const existing =
-                cart.find(x =>
+                cart.find(function (x) {
 
-                    x.productId === item.productId &&
+                    return (
 
-                    x.variantId === item.variantId &&
+                        x.productId ===
+                        item.productId
 
-                    (
-                        item.customPrice === null ||
+                        &&
 
-                        x.customPrice === item.customPrice
-                    )
+                        x.variantId ===
+                        item.variantId
 
-                );
+                        &&
 
+                        (
+                            item.customPrice === null
+
+                            ||
+
+                            x.customPrice ===
+                            item.customPrice
+                        )
+
+                    );
+
+                });
+
+
+
+            // ==================================================
+            // EXISTING ITEM
+            // ==================================================
 
             if (existing) {
 
                 existing.quantity++;
 
             }
+
+
+            // ==================================================
+            // NEW ITEM
+            // ==================================================
+
             else {
 
                 cart.push({
@@ -780,85 +1682,130 @@ async function printReceipt(cart, invoiceId, total) {
             }
 
 
+            // Update cart
             renderCart();
 
         }
 
 
-        // =====================================================
+
+        // ==========================================================
         // RENDER CART
-        // =====================================================
+        // ==========================================================
 
         function renderCart() {
 
             const container =
-                document.getElementById("cartItems");
+                document.getElementById(
+                    "cartItems"
+                );
 
 
+            // Clear cart HTML
             container.innerHTML = "";
 
+
+
+            // ==================================================
+            // EMPTY CART
+            // ==================================================
 
             if (cart.length === 0) {
 
                 container.innerHTML = `
 
-                        <div id="emptyCart"
-                             class="text-center text-muted py-5">
+                    <div id="emptyCart"
+                         class="text-center text-muted py-5">
 
-                            <i class="bi bi-cart3"
-                               style="font-size:40px;">
-                            </i>
+                        <i class="bi bi-cart3"
+                           style="font-size:40px;">
+                        </i>
 
-                            <p class="mt-3 mb-0">
-                                No items added
-                            </p>
+                        <p class="mt-3 mb-0">
+                            No items added
+                        </p>
 
-                        </div>
+                    </div>
 
-                    `;
+                `;
 
-                document.getElementById("cartCount")
+
+                document
+                    .getElementById(
+                        "cartCount"
+                    )
                     .textContent = "0";
 
-                document.getElementById("subTotal")
+
+                document
+                    .getElementById(
+                        "subTotal"
+                    )
                     .textContent = "0.00";
 
-                document.getElementById("grandTotal")
+
+                document
+                    .getElementById(
+                        "grandTotal"
+                    )
                     .textContent = "0.00";
 
-                document.getElementById("checkoutBtn")
+
+                document
+                    .getElementById(
+                        "checkoutBtn"
+                    )
                     .disabled = true;
 
-                return;
 
+                return;
             }
 
+
+
+            // ==================================================
+            // CALCULATE TOTAL
+            // ==================================================
 
             let total = 0;
 
             let itemCount = 0;
 
 
-            cart.forEach(function (item, index) {
 
-                const itemTotal =
-                    item.price * item.quantity;
+            // ==================================================
+            // RENDER CART ITEMS
+            // ==================================================
 
+            cart.forEach(
+                function (item, index) {
 
-                total += itemTotal;
-
-                itemCount += item.quantity;
-
-
-                const div =
-                    document.createElement("div");
+                    const itemTotal =
+                        item.price *
+                        item.quantity;
 
 
-                div.className =
-                    "cart-item";
+                    total +=
+                        itemTotal;
 
 
-                div.innerHTML = `
+                    itemCount +=
+                        item.quantity;
+
+
+
+                    const div =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    div.className =
+                        "cart-item";
+
+
+
+                    div.innerHTML = `
 
                         <div class="d-flex justify-content-between">
 
@@ -925,237 +1872,634 @@ async function printReceipt(cart, invoiceId, total) {
                     `;
 
 
-                container.appendChild(div);
+                    container.appendChild(
+                        div
+                    );
 
-            });
-
-
-            document.getElementById("cartCount")
-                .textContent = itemCount;
-
-
-            document.getElementById("subTotal")
-                .textContent = total.toFixed(2);
+                }
+            );
 
 
-            document.getElementById("grandTotal")
-                .textContent = total.toFixed(2);
+
+            // ==================================================
+            // UPDATE CART SUMMARY
+            // ==================================================
+
+            document
+                .getElementById(
+                    "cartCount"
+                )
+                .textContent =
+                itemCount;
 
 
-            document.getElementById("checkoutBtn")
+            document
+                .getElementById(
+                    "subTotal"
+                )
+                .textContent =
+                total.toFixed(2);
+
+
+            document
+                .getElementById(
+                    "grandTotal"
+                )
+                .textContent =
+                total.toFixed(2);
+
+
+            document
+                .getElementById(
+                    "checkoutBtn"
+                )
                 .disabled = false;
 
 
-            // Increase quantity
 
-            document.querySelectorAll(".increase-qty")
-                .forEach(function (button) {
+            // ==================================================
+            // INCREASE QUANTITY
+            // ==================================================
 
-                    button.addEventListener("click", function () {
+            document
+                .querySelectorAll(
+                    ".increase-qty"
+                )
+                .forEach(
+                    function (button) {
 
-                        const index =
-                            parseInt(this.dataset.index);
+                        button.addEventListener(
+                            "click",
+                            function () {
 
-                        cart[index].quantity++;
-
-                        renderCart();
-
-                    });
-
-                });
-
-
-            // Decrease quantity
-
-            document.querySelectorAll(".decrease-qty")
-                .forEach(function (button) {
-
-                    button.addEventListener("click", function () {
-
-                        const index =
-                            parseInt(this.dataset.index);
+                                const index =
+                                    parseInt(
+                                        this.dataset.index
+                                    );
 
 
-                        if (cart[index].quantity > 1) {
+                                if (
+                                    cart[index]
+                                ) {
 
-                            cart[index].quantity--;
+                                    cart[index]
+                                        .quantity++;
 
-                        }
-                        else {
-
-                            cart.splice(index, 1);
-
-                        }
+                                }
 
 
-                        renderCart();
+                                renderCart();
 
-                    });
+                            }
+                        );
 
-                });
+                    }
+                );
 
 
-            // Remove
 
-            document.querySelectorAll(".remove-cart-item")
-                .forEach(function (button) {
+            // ==================================================
+            // DECREASE QUANTITY
+            // ==================================================
 
-                    button.addEventListener("click", function () {
+            document
+                .querySelectorAll(
+                    ".decrease-qty"
+                )
+                .forEach(
+                    function (button) {
 
-                        const index =
-                            parseInt(this.dataset.index);
+                        button.addEventListener(
+                            "click",
+                            function () {
 
-                        cart.splice(index, 1);
+                                const index =
+                                    parseInt(
+                                        this.dataset.index
+                                    );
 
-                        renderCart();
 
-                    });
+                                if (!cart[index]) {
+                                    return;
+                                }
 
-                });
+
+                                if (
+                                    cart[index]
+                                        .quantity > 1
+                                ) {
+
+                                    cart[index]
+                                        .quantity--;
+
+                                }
+                                else {
+
+                                    cart.splice(
+                                        index,
+                                        1
+                                    );
+
+                                }
+
+
+                                renderCart();
+
+                            }
+                        );
+
+                    }
+                );
+
+
+
+            // ==================================================
+            // REMOVE ITEM
+            // ==================================================
+
+            document
+                .querySelectorAll(
+                    ".remove-cart-item"
+                )
+                .forEach(
+                    function (button) {
+
+                        button.addEventListener(
+                            "click",
+                            function () {
+
+                                const index =
+                                    parseInt(
+                                        this.dataset.index
+                                    );
+
+
+                                if (
+                                    cart[index]
+                                ) {
+
+                                    cart.splice(
+                                        index,
+                                        1
+                                    );
+
+                                }
+
+
+                                renderCart();
+
+                            }
+                        );
+
+                    }
+                );
 
         }
 
 
-        // =====================================================
+
+        // ==========================================================
         // CLEAR CART
-        // =====================================================
+        // ==========================================================
 
-        document.getElementById("clearCartBtn")
-            .addEventListener("click", function () {
+        document
+            .getElementById(
+                "clearCartBtn"
+            )
+            .addEventListener(
+                "click",
+                function () {
 
-                if (cart.length === 0) {
-                    return;
+                    // Nothing to clear
+                    if (cart.length === 0) {
+                        return;
+                    }
+
+
+                    // Confirm
+                    if (
+                        !confirm(
+                            "Clear the current order?"
+                        )
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    // Clear
+                    cart = [];
+
+
+                    // Render
+                    renderCart();
+
                 }
+            );
 
 
-                if (!confirm("Clear the current order?")) {
-                    return;
-                }
 
-
-                cart = [];
-
-                renderCart();
-
-            });
-
-
-        // =====================================================
+        // ==========================================================
         // CHECKOUT
-        // =====================================================
+        // ==========================================================
 
-    document.getElementById("checkoutBtn")
-        .addEventListener("click", async function () {
+        document
+            .getElementById(
+                "checkoutBtn"
+            )
+            .addEventListener(
+                "click",
+                async function () {
 
-            if (cart.length === 0) {
-                alert("Please add at least one item.");
-                return;
-            }
+                    // ==============================================
+                    // VALIDATE CART
+                    // ==============================================
 
-            const button = this;
-            const cartSnapshot = cart.map(item => ({ ...item })); // freeze before clearing
-            const total = cartSnapshot.reduce((sum, i) => sum + i.price * i.quantity, 0);
+                    if (cart.length === 0) {
 
-            button.disabled = true;
-            button.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Saving...`;
+                        alert(
+                            "Please add at least one item."
+                        );
 
-            try {
-                const response = await fetch("@Url.Action("Save", "Invoice")", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        items: cartSnapshot.map(item => ({
-                            foodItemVariantId: item.variantId,
-                            quantity: item.quantity,
-                            customPrice: item.customPrice
-                        }))
-                    })
-                });
+                        return;
+                    }
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(errorText || "Failed to save invoice.");
+
+
+                    const button = this;
+
+
+
+                    // Freeze cart before saving
+                    const cartSnapshot =
+                        cart.map(
+                            function (item) {
+
+                                return {
+                                    ...item
+                                };
+
+                            }
+                        );
+
+
+
+                    // Calculate total
+                    const total =
+                        cartSnapshot.reduce(
+                            function (
+                                sum,
+                                item
+                            ) {
+
+                                return (
+                                    sum +
+                                    (
+                                        item.price *
+                                        item.quantity
+                                    )
+                                );
+
+                            },
+                            0
+                        );
+
+
+
+                    // Disable button
+                    button.disabled =
+                        true;
+
+
+                    button.innerHTML = `
+
+                        <span class="spinner-border spinner-border-sm me-2">
+                        </span>
+
+                        Saving...
+
+                    `;
+
+
+
+                    try {
+
+                        // ==========================================
+                        // SAVE INVOICE
+                        // ==========================================
+
+                        const response =
+                            await fetch(
+                                "@Url.Action("Save", "Invoice")",
+                                {
+
+                                    method:
+                                        "POST",
+
+                                    headers: {
+
+                                        "Content-Type":
+                                            "application/json"
+
+                                    },
+
+                                    body:
+                                        JSON.stringify({
+
+                                            items:
+                                                cartSnapshot.map(
+                                                    function (item) {
+
+                                                        return {
+
+                                                            foodItemVariantId:
+                                                                item.variantId,
+
+                                                            quantity:
+                                                                item.quantity,
+
+                                                            customPrice:
+                                                                item.customPrice
+
+                                                        };
+
+                                                    }
+                                                )
+
+                                        })
+
+                                }
+                            );
+
+
+
+                        // ==========================================
+                        // CHECK HTTP RESPONSE
+                        // ==========================================
+
+                        if (!response.ok) {
+
+                            const errorText =
+                                await response.text();
+
+
+                            throw new Error(
+                                errorText ||
+                                "Failed to save invoice."
+                            );
+
+                        }
+
+
+
+                        // ==========================================
+                        // READ RESPONSE
+                        // ==========================================
+
+                        const result =
+                            await response.json();
+
+
+
+                        if (!result.success) {
+
+                            throw new Error(
+                                "Invoice could not be saved."
+                            );
+
+                        }
+
+
+
+                        // ==========================================
+                        // PRINT
+                        // ==========================================
+
+                        button.innerHTML = `
+
+                            <span class="spinner-border spinner-border-sm me-2">
+                            </span>
+
+                            Printing...
+
+                        `;
+
+
+
+                        try {
+
+                            await printReceipt(
+                                cartSnapshot,
+                                result.invoiceId,
+                                total
+                            );
+
+                        }
+                        catch (printError) {
+
+                            console.error(
+                                "Print failed:",
+                                printError
+                            );
+
+
+                            alert(
+                                "Invoice saved (#" +
+                                result.invoiceId +
+                                ") but printing failed: " +
+                                printError.message
+                            );
+
+                        }
+
+
+
+                        // ==========================================
+                        // CLEAR CART
+                        // ==========================================
+
+                        cart = [];
+
+
+                        renderCart();
+
+
+
+                        // ==========================================
+                        // SHOW SUCCESS TOAST
+                        // ==========================================
+
+                        showInvoiceToast(
+                            result.invoiceId
+                        );
+
+                    }
+                    catch (error) {
+
+                        console.error(
+                            error
+                        );
+
+
+                        alert(
+                            error.message ||
+                            "Something went wrong."
+                        );
+
+                    }
+                    finally {
+
+                        button.disabled =
+                            cart.length === 0;
+
+
+                        button.innerHTML = `
+
+                            <i class="bi bi-check-circle">
+                            </i>
+
+                            Checkout
+
+                        `;
+
+                    }
+
                 }
+            );
 
-                const result = await response.json();
 
-                if (!result.success) {
-                    throw new Error("Invoice could not be saved.");
-                }
 
-                // Invoice saved — now print
-                button.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Printing...`;
+        // ==========================================================
+        // INVOICE TOAST
+        // ==========================================================
 
-                try {
-                    await printReceipt(cartSnapshot, result.invoiceId, total);
-                } catch (printError) {
-                    console.error("Print failed:", printError);
-                    alert("Invoice saved (#" + result.invoiceId + ") but printing failed: " + printError.message);
-                }
+        function showInvoiceToast(
+            invoiceId
+        ) {
 
-                // Clear cart for next order
-                cart = [];
-                renderCart();
+            const toastEl =
+                document.createElement(
+                    "div"
+                );
 
-                showInvoiceToast(result.invoiceId);
 
-            } catch (error) {
-                console.error(error);
-                alert(error.message || "Something went wrong.");
-            } finally {
-                button.disabled = cart.length === 0;
-                button.innerHTML = `<i class="bi bi-check-circle"></i> Checkout`;
-            }
-        });
+            toastEl.className =
+                "toast align-items-center text-bg-success border-0 position-fixed bottom-0 end-0 m-4";
 
-    function showInvoiceToast(invoiceId) {
-        const toastEl = document.createElement("div");
-        toastEl.className = "toast align-items-center text-bg-success border-0 position-fixed bottom-0 end-0 m-4";
-        toastEl.style.zIndex = 1080;
-        toastEl.setAttribute("role", "alert");
-        toastEl.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">
-                    Invoice #${invoiceId} saved and printed.
-                    <a href="@Url.Action("Details", "Invoice")?id=${invoiceId}" class="text-white text-decoration-underline ms-1">
-                        View
-                    </a>
+
+            toastEl.style.zIndex =
+                "1080";
+
+
+            toastEl.setAttribute(
+                "role",
+                "alert"
+            );
+
+
+            toastEl.innerHTML = `
+
+                <div class="d-flex">
+
+                    <div class="toast-body">
+
+                        Invoice #${invoiceId}
+                        saved and printed.
+
+                        <a href="@Url.Action("Details", "Invoice")?id=${invoiceId}"
+                           class="text-white text-decoration-underline ms-1">
+
+                            View
+
+                        </a>
+
+                    </div>
+
+
+                    <button type="button"
+                            class="btn-close btn-close-white me-2 m-auto"
+                            data-bs-dismiss="toast">
+                    </button>
+
                 </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>`;
 
-        document.body.appendChild(toastEl);
-        const toast = new bootstrap.Toast(toastEl, { delay: 5000 });
-        toast.show();
-        toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
-    }
+            `;
 
 
-        // =====================================================
+            document.body.appendChild(
+                toastEl
+            );
+
+
+            const toast =
+                new bootstrap.Toast(
+                    toastEl,
+                    {
+                        delay: 5000
+                    }
+                );
+
+
+            toast.show();
+
+
+            toastEl.addEventListener(
+                "hidden.bs.toast",
+                function () {
+
+                    toastEl.remove();
+
+                }
+            );
+
+        }
+
+
+
+        // ==========================================================
         // HTML ESCAPE
-        // =====================================================
+        // ==========================================================
 
         function escapeHtml(value) {
 
             return String(value)
 
-                .replace(/&/g, "&amp;")
+                .replace(
+                    /&/g,
+                    "&amp;"
+                )
 
-                .replace(/</g, "&lt;")
+                .replace(
+                    /</g,
+                    "&lt;"
+                )
 
-                .replace(/>/g, "&gt;")
+                .replace(
+                    />/g,
+                    "&gt;"
+                )
 
-                .replace(/"/g, "&quot;")
+                .replace(
+                    /"/g,
+                    "&quot;"
+                )
 
-                .replace(/'/g, "&#039;");
+                .replace(
+                    /'/g,
+                    "&#039;"
+                );
 
         }
 
 
-        // Initial render
+
+        // ==========================================================
+        // INITIAL CART RENDER
+        // ==========================================================
 
         renderCart();
 
     </script>
-
 }
+
