@@ -195,17 +195,17 @@
                                 <!-- CUSTOM PRICE -->
                                 <div class="col-md-2 mb-3 mb-md-0">
 
-                                    <div class="form-check">
-
-                                        <input type="hidden"
-                                               name="Variants[@i].IsCustomPrice"
-                                               value="false" />
+                                    <div class="form-check"> 
 
                                         <input name="Variants[@i].IsCustomPrice"
                                                value="true"
                                                type="checkbox"
                                                class="form-check-input custom-price-checkbox"
                                         @(Model.Variants[i].IsCustomPrice ? "checked" : "") />
+
+                                        <input type="hidden"
+                                               name="Variants[@i].IsCustomPrice"
+                                               value="false" />
 
                                         <label class="form-check-label">
                                             Custom Price
@@ -218,25 +218,21 @@
 
                                 <!-- ACTIVE -->
                                 <div class="col-md-2 mb-3 mb-md-0">
-
                                     <div class="form-check">
+                                        <input type="checkbox"
+                                               name="Variants[@i].IsActive"
+                                               value="true"
+                                               class="form-check-input"
+                                        @(Model.Variants[i].IsActive ? "checked" : "") />
 
                                         <input type="hidden"
                                                name="Variants[@i].IsActive"
                                                value="false" />
 
-                                        <input name="Variants[@i].IsActive"
-                                               value="true"
-                                               type="checkbox"
-                                               class="form-check-input"
-                                        @(Model.Variants[i].IsActive ? "checked" : "") />
-
                                         <label class="form-check-label">
                                             Active
                                         </label>
-
                                     </div>
-
                                 </div>
 
 

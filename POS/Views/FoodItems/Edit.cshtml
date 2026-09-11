@@ -435,14 +435,30 @@
         // REMOVE VARIANT
         // -----------------------------------------
 
+        // -----------------------------------------
+        // REMOVE VARIANT
+        // -----------------------------------------
+
         $(document).on("click", ".remove-variant", function () {
 
-            $(this).closest(".variant-row").remove();
+            const row = $(this).closest(".variant-row");
 
-            updateNoVariantsMessage();
+            Swal.fire({
+                title: "Remove this variant?",
+                text: "This will be removed once you save.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Yes, remove it",
+                cancelButtonText: "Cancel",
+                confirmButtonColor: "#dc3545"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    row.remove();
+                    updateNoVariantsMessage();
+                }
+            });
 
         });
-
 
         // -----------------------------------------
         // CUSTOM PRICE

@@ -24,7 +24,7 @@ namespace POS.Controllers
         }
         public async Task<IActionResult> QuickInvoice()
         {
-            var items = await _context.FoodItems
+            var items = await _context.FoodItems.Include(x => x.Variants)
                 .Where(x => x.IsActive)
                 .ToListAsync();
 
@@ -33,7 +33,7 @@ namespace POS.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
-            var invoice = await _context.FoodItems
+            var invoice = await _context.FoodItems.Include(x=>x.Variants)
                 
                 .FirstOrDefaultAsync(x => x.Id == id);
 
