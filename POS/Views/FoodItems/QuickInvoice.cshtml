@@ -434,8 +434,95 @@
 
 
 @section Scripts {
-
+    <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.js"></script>
     <script>
+        // ==========================================================
+        // QZ TRAY CONFIG
+        // ==========================================================
+
+        // Change this to match the exact printer name registered
+        // in QZ Tray / Windows (Control Panel > Printers).
+        const THERMAL_PRINTER_NAME = "XP-58"; // <-- CHANGE THIS
+
+        // Minimal "unsigned" trust setup — QZ Tray must be configured
+        // to allow unsigned connections for this to work.
+        // For production, replace these two promises with calls to a
+        // backend endpoint that signs the request with your private key.
+        qz.security.setCertificatePromise(function (resolve) {
+            resolve(""); // no cert (trust-on-first-use)
+        });
+
+        qz.security.setSignaturePromise(function () {
+            return function (resolve) {
+                resolve(""); // no signature
+            };
+        });
+
+        async function ensureQzConnected() {
+            if (!qz.websocket.isActive()) {
+                await qz.websocket.connect();
+            }
+        }
+
+
+
+        function buildReceiptData(cart, invoiceId, total) {
+
+    const ESC = "\x1B";
+    const GS = "\x1D";
+    const line = "--------------------------------\n";
+
+    let receipt = "";
+
+    receipt += ESC + "@@";
+    receipt += ESC + "a" + "\x01";     // center align
+    receipt += ESC + "!" + "\x18";     // double height/width
+    receipt += "MY STORE NAME\n";
+    receipt += ESC + "!" + "\x00";     // normal text
+    receipt += "Invoice #" + invoiceId + "\n";
+    receipt += new Date().toLocaleString() + "\n";
+    receipt += line;
+
+    receipt += ESC + "a" + "\x00";     // left align
+
+    cart.forEach(function (item) {
+        const name = item.productName + " (" + item.variantName + ")";
+        const qtyPrice = item.quantity + " x " + item.price.toFixed(2);
+        const lineTotal = (item.quantity * item.price).toFixed(2);
+
+        receipt += name + "\n";
+        receipt += qtyPrice.padEnd(20, " ") + lineTotal.padStart(12, " ") + "\n";
+    });
+
+    receipt += line;
+    receipt += ESC + "!" + "\x10";     // bold
+    receipt += ("TOTAL").padEnd(20, " ") + total.toFixed(2).padStart(12, " ") + "\n";
+    receipt += ESC + "!" + "\x00";
+    receipt += "\n\n\n";
+
+    receipt += GS + "V" + "\x00";      // full cut
+
+    return [{
+        type: "raw",
+        format: "plain",
+        flavor: "plain",
+        data: receipt
+    }];
+}
+
+
+async function printReceipt(cart, invoiceId, total) {
+    await ensureQzConnected();
+
+    const config = qz.configs.create(THERMAL_PRINTER_NAME);
+    const data = buildReceiptData(cart, invoiceId, total);
+
+    await qz.print(config, data);
+}
+
+
+
+
 
         // =====================================================
         // CART
@@ -957,127 +1044,91 @@
         // CHECKOUT
         // =====================================================
 
-        document.getElementById("checkoutBtn")
-            .addEventListener("click", async function () {
+    document.getElementById("checkoutBtn")
+        .addEventListener("click", async function () {
 
-                if (cart.length === 0) {
+            if (cart.length === 0) {
+                alert("Please add at least one item.");
+                return;
+            }
 
-                    alert("Please add at least one item.");
+            const button = this;
+            const cartSnapshot = cart.map(item => ({ ...item })); // freeze before clearing
+            const total = cartSnapshot.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
-                    return;
+            button.disabled = true;
+            button.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Saving...`;
 
+            try {
+                const response = await fetch("@Url.Action("Save", "Invoice")", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        items: cartSnapshot.map(item => ({
+                            foodItemVariantId: item.variantId,
+                            quantity: item.quantity,
+                            customPrice: item.customPrice
+                        }))
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || "Failed to save invoice.");
                 }
 
+                const result = await response.json();
 
-                const button = this;
+                if (!result.success) {
+                    throw new Error("Invoice could not be saved.");
+                }
 
-
-                button.disabled = true;
-
-                button.innerHTML = `
-
-                        <span class="spinner-border spinner-border-sm me-2"></span>
-
-                        Saving...
-
-                    `;
-
+                // Invoice saved — now print
+                button.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Printing...`;
 
                 try {
-
-                    const response =
-                        await fetch(
-                            "@Url.Action("Save", "Invoice")",
-                            {
-
-                                method: "POST",
-
-                                headers: {
-
-                                    "Content-Type":
-                                        "application/json"
-
-                                },
-
-                                body: JSON.stringify({
-
-                                    items:
-                                        cart.map(item => ({
-
-                                            foodItemVariantId:
-                                                item.variantId,
-
-                                            quantity:
-                                                item.quantity,
-
-                                            customPrice:
-                                                item.customPrice
-
-                                        }))
-
-                                })
-
-                            }
-                        );
-
-
-                    if (!response.ok) {
-
-                        const errorText =
-                            await response.text();
-
-                        throw new Error(
-                            errorText ||
-                            "Failed to save invoice."
-                        );
-
-                    }
-
-
-                    const result =
-                        await response.json();
-
-
-                    if (result.success) {
-
-                        window.location.href =
-                            "@Url.Action("Details", "Invoice")" +
-                            "?id=" +
-                            result.invoiceId;
-
-                    }
-                    else {
-
-                        throw new Error(
-                            "Invoice could not be saved."
-                        );
-
-                    }
-
-                }
-                catch (error) {
-
-                    console.error(error);
-
-                    alert(
-                        error.message ||
-                        "Something went wrong."
-                    );
-
-
-                    button.disabled = false;
-
-                    button.innerHTML = `
-
-                            <i class="bi bi-check-circle"></i>
-
-                            Checkout
-
-                        `;
-
+                    await printReceipt(cartSnapshot, result.invoiceId, total);
+                } catch (printError) {
+                    console.error("Print failed:", printError);
+                    alert("Invoice saved (#" + result.invoiceId + ") but printing failed: " + printError.message);
                 }
 
-            });
+                // Clear cart for next order
+                cart = [];
+                renderCart();
+
+                showInvoiceToast(result.invoiceId);
+
+            } catch (error) {
+                console.error(error);
+                alert(error.message || "Something went wrong.");
+            } finally {
+                button.disabled = cart.length === 0;
+                button.innerHTML = `<i class="bi bi-check-circle"></i> Checkout`;
+            }
+        });
+
+    function showInvoiceToast(invoiceId) {
+        const toastEl = document.createElement("div");
+        toastEl.className = "toast align-items-center text-bg-success border-0 position-fixed bottom-0 end-0 m-4";
+        toastEl.style.zIndex = 1080;
+        toastEl.setAttribute("role", "alert");
+        toastEl.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    Invoice #${invoiceId} saved and printed.
+                    <a href="@Url.Action("Details", "Invoice")?id=${invoiceId}" class="text-white text-decoration-underline ms-1">
+                        View
+                    </a>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>`;
+
+        document.body.appendChild(toastEl);
+        const toast = new bootstrap.Toast(toastEl, { delay: 5000 });
+        toast.show();
+        toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
+    }
 
 
         // =====================================================
