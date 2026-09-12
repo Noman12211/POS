@@ -23,7 +23,14 @@
     </a>
 
 </div>
-
+@if (TempData["SuccessMessage"] != null)
+{
+    <div id="tempSuccessMsg" data-message="@TempData["SuccessMessage"]"></div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div id="tempErrorMsg" data-message="@TempData["ErrorMessage"]"></div>
+}
 
 <div class="card shadow-sm border-0">
 
@@ -107,11 +114,9 @@
 
                                     @Html.AntiForgeryToken()
 
-                                    <button type="submit"
-                                            class="btn btn-sm btn-outline-danger">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
                                         <i class="bi bi-trash"></i>
                                     </button>
-
                                 </form>
                             </td>
 
@@ -128,25 +133,79 @@
 
 </div>
 <script>
-$(document).on("submit", ".delete-form", function (e) {
+    $(document).ready(function () {
+        const successEl = document.getElementById("tempSuccessMsg");
+        const errorEl = document.getElementById("tempErrorMsg");
 
-    e.preventDefault();
+        if (successEl) {
+            Swal.fire({
+                icon: "success",
+                title: "Success",
+                text: successEl.dataset.message,
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
 
-    const form = this;
-
-    Swal.fire({
-        title: "Delete this product?",
-        text: "This action cannot be undone.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Yes, delete it",
-        cancelButtonText: "Cancel",
-        confirmButtonColor: "#dc3545"
-    }).then((result) => {
-        if (result.isConfirmed) {
-            form.submit();
+        if (errorEl) {
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: errorEl.dataset.message
+            });
         }
     });
+    $(document).on("submit", ".delete-form", function (e) {
+        e.preventDefault();
 
+        const form = this;
+        const url = form.action;
+        const token = $(form).find('input[name="__RequestVerificationToken"]').val();
+        const row = $(form).closest("tr");
+
+        Swal.fire({
+            title: "Delete this product?",
+            text: "This action cannot be undone.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Yes, delete it",
+            cancelButtonText: "Cancel",
+            confirmButtonColor: "#dc3545"
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+
+            $.ajax({
+                url: url,
+                type: "POST",
+                data: { __RequestVerificationToken: token },
+                success: function (response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: "success",
+                            title: "Deleted!",
+                            text: response.message,
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        row.fadeOut(300, function () {
+                            row.remove();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Error",
+                            text: response.message
+                        });
+                    }
+                },
+                error: function () {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error",
+                        text: "Unable to reach the server. Please try again."
+                    });
+                }
+            });
+        });
     });
     </script>

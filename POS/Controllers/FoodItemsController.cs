@@ -135,6 +135,7 @@ namespace POS.Controllers
             {
                 Id = foodItem.Id,
                 Name = foodItem.Name,
+                ImagePath=foodItem.ImagePath,
                 IsActive = foodItem.IsActive,
 
                 Variants = foodItem.Variants
@@ -166,113 +167,159 @@ namespace POS.Controllers
                 return View(model);
             }
 
-            var foodItem = await _context.FoodItems
-                .Include(x => x.Variants)
-                .FirstOrDefaultAsync(x => x.Id == model.Id);
-
-            if (foodItem == null)
+            try
             {
-                return NotFound();
-            }
+                var foodItem = await _context.FoodItems
+                    .Include(x => x.Variants)
+                    .FirstOrDefaultAsync(x => x.Id == model.Id);
 
-
-            // Update product
-            foodItem.Name = model.Name;
-            foodItem.IsActive = model.IsActive;
-
-
-            // Existing variant IDs submitted from the form
-            var submittedVariantIds = model.Variants
-                .Where(x => x.Id > 0)
-                .Select(x => x.Id)
-                .ToHashSet();
-
-
-            // Delete variants removed from the page
-            var variantsToDelete = foodItem.Variants
-                .Where(x => !submittedVariantIds.Contains(x.Id))
-                .ToList();
-
-            foreach (var variant in variantsToDelete)
-            {
-                _context.FoodItemVariants.Remove(variant);
-            }
-
-
-            // Update existing / add new variants
-            foreach (var variantModel in model.Variants)
-            {
-                if (string.IsNullOrWhiteSpace(variantModel.VariantName))
-                    continue;
-
-
-                // Existing variant
-                if (variantModel.Id > 0)
+                if (foodItem == null)
                 {
-                    var variant = foodItem.Variants
-                        .FirstOrDefault(x => x.Id == variantModel.Id);
+                    TempData["ErrorMessage"] = "Product not found.";
+                    return RedirectToAction(nameof(Index));
+                }
 
-                    if (variant == null)
+                // Update product
+                foodItem.Name = model.Name;
+                foodItem.IsActive = model.IsActive;
+
+                // Handle image replacement
+                if (model.ImageFile != null && model.ImageFile.Length > 0)
+                {
+                    var uploadsFolder = Path.Combine(
+                        Directory.GetCurrentDirectory(),
+                        "wwwroot",
+                        "images",
+                        "products"
+                    );
+
+                    if (!Directory.Exists(uploadsFolder))
+                    {
+                        Directory.CreateDirectory(uploadsFolder);
+                    }
+
+                    var fileName = Guid.NewGuid().ToString() +
+                                   Path.GetExtension(model.ImageFile.FileName);
+
+                    var filePath = Path.Combine(uploadsFolder, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await model.ImageFile.CopyToAsync(stream);
+                    }
+
+                    // Delete old image file if one exists (non-blocking)
+                    if (!string.IsNullOrEmpty(foodItem.ImagePath))
+                    {
+                        try
+                        {
+                            var oldFilePath = Path.Combine(
+                                Directory.GetCurrentDirectory(),
+                                "wwwroot",
+                                foodItem.ImagePath.TrimStart('/')
+                            );
+
+                            if (System.IO.File.Exists(oldFilePath))
+                            {
+                                System.IO.File.Delete(oldFilePath);
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            // Old file cleanup failed — not critical, continue
+                        }
+                    }
+
+                    foodItem.ImagePath = "/images/products/" + fileName;
+                }
+
+                // Existing variant IDs submitted from the form
+                var submittedVariantIds = model.Variants
+                    .Where(x => x.Id > 0)
+                    .Select(x => x.Id)
+                    .ToHashSet();
+
+                // Delete variants removed from the page
+                var variantsToDelete = foodItem.Variants
+                    .Where(x => !submittedVariantIds.Contains(x.Id))
+                    .ToList();
+
+                foreach (var variant in variantsToDelete)
+                {
+                    _context.FoodItemVariants.Remove(variant);
+                }
+
+                // Update existing / add new variants
+                foreach (var variantModel in model.Variants)
+                {
+                    if (string.IsNullOrWhiteSpace(variantModel.VariantName))
                         continue;
 
-                    variant.VariantName = variantModel.VariantName;
-
-                    variant.Price = variantModel.IsCustomPrice
-                        ? 0
-                        : variantModel.Price;
-
-                    variant.IsCustomPrice = variantModel.IsCustomPrice;
-
-                    variant.IsActive = variantModel.IsActive;
-                }
-
-                // New variant
-                else
-                {
-                    var newVariant = new FoodItemVariant
+                    if (variantModel.Id > 0)
                     {
-                        FoodItemId = foodItem.Id,
-                        VariantName = variantModel.VariantName,
+                        var variant = foodItem.Variants
+                            .FirstOrDefault(x => x.Id == variantModel.Id);
 
-                        Price = variantModel.IsCustomPrice
-                            ? 0
-                            : variantModel.Price,
+                        if (variant == null)
+                            continue;
 
-                        IsCustomPrice = variantModel.IsCustomPrice,
-                        IsActive = variantModel.IsActive
-                    };
+                        variant.VariantName = variantModel.VariantName;
+                        variant.Price = variantModel.IsCustomPrice ? 0 : variantModel.Price;
+                        variant.IsCustomPrice = variantModel.IsCustomPrice;
+                        variant.IsActive = variantModel.IsActive;
+                    }
+                    else
+                    {
+                        var newVariant = new FoodItemVariant
+                        {
+                            FoodItemId = foodItem.Id,
+                            VariantName = variantModel.VariantName,
+                            Price = variantModel.IsCustomPrice ? 0 : variantModel.Price,
+                            IsCustomPrice = variantModel.IsCustomPrice,
+                            IsActive = variantModel.IsActive
+                        };
 
-                    _context.FoodItemVariants.Add(newVariant);
+                        _context.FoodItemVariants.Add(newVariant);
+                    }
                 }
+
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Product updated successfully.";
+                return RedirectToAction(nameof(Index));
             }
-
-
-            await _context.SaveChangesAsync();
-
-            return RedirectToAction(nameof(Index));
+            catch (Exception)
+            {
+                TempData["ErrorMessage"] = "Something went wrong while updating the product.";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int Id)
         {
-            var foodItem = await _context.FoodItems
+            try
+            {
+                var foodItem = await _context.FoodItems
                 .Include(x => x.Variants).Include(x => x.InvoiceItems)
                 .FirstOrDefaultAsync(x => x.Id == Id);
 
             if (foodItem == null)
             {
-                return NotFound();
-            }
+                    return Json(new { success = false, message = "Product not found." });
+                }
 
             _context.FoodItems.Remove(foodItem);
             _context.FoodItemVariants.RemoveRange(foodItem.Variants); 
             _context.InvoiceItems.RemoveRange(foodItem.InvoiceItems);
             await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] =
-                "Food Item deleted successfully.";
-
-            return RedirectToAction(nameof(Index));
+                return Json(new { success = true, message = "Product deleted successfully." }); 
+            }
+            catch (Exception)
+            {
+                return Json(new { success = false, message = "Something went wrong while deleting the product." });
+            }
         }
     }
 }

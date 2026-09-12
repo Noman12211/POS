@@ -7,16 +7,16 @@
 
 <div class="mb-4">
 
-    <h2>Add Product</h2>
+    <h2>Update Product</h2>
 
     <p class="text-muted">
-        Add a new food item and its variants to your menu.
+        Update food item and its variants.
     </p>
 
 </div>
 
 
-<form asp-action="Edit" method="post">
+<form asp-action="Edit" method="post" enctype="multipart/form-data">
 
     <div asp-validation-summary="ModelOnly"
          class="alert alert-danger"
@@ -30,7 +30,7 @@
         <div class="card-header bg-white">
 
             <h5 class="mb-0">
-                Product Information
+                Product Information 
             </h5>
 
         </div>
@@ -49,7 +49,7 @@
             <div class="row">
 
                 <!-- PRODUCT NAME -->
-                <div class="col-md-6 mb-3">
+                <div class="col-md-3 mb-3">
 
                     <label asp-for="Name"
                            class="form-label">
@@ -67,7 +67,7 @@
 
 
                 <!-- BASE PRICE -->
-                <div class="col-md-6 mb-3">
+                <div class="col-md-3 mb-3">
 
                     <label asp-for="Price"
                            class="form-label">
@@ -89,21 +89,54 @@
                     </small>
 
                 </div>
+                <!-- Image -->
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Product Image</label>
 
+                    @if (!string.IsNullOrEmpty(Model.ImagePath))
+                    {
+                        <div class="mb-2">
+                            <img src="@Model.ImagePath"
+                                 alt="@Model.Name"
+                                 style="width:80px; height:80px; object-fit:cover;" />
+                            <div class="text-muted small">Current image</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted small mb-2">No image uploaded</div>
+                    }
+
+                    <input asp-for="ImageFile"
+                           class="form-control"
+                           type="file"
+                           accept="image/*" />
+
+                    <span asp-validation-for="ImageFile" class="text-danger"></span>
+                </div>
+
+
+
+                <!-- ACTIVE -->
+                <div class="col-md-3 mb-3">
+                <div class="form-check">
+
+                    <input asp-for="IsActive"
+                           class="form-check-input" />
+
+                    <label asp-for="IsActive"
+                           class="form-check-label">
+                    </label>
+
+                </div>
+                </div>
             </div>
+            
+             
 
+        </div>
 
-            <!-- ACTIVE -->
-            <div class="form-check">
-
-                <input asp-for="IsActive"
-                       class="form-check-input" />
-
-                <label asp-for="IsActive"
-                       class="form-check-label">
-                </label>
-
-            </div>
+            
 
         </div>
 
@@ -304,7 +337,8 @@
 
 
     <script>
-
+        
+        });
         let variantIndex = @((Model.Variants?.Count ?? 0));
 
 
