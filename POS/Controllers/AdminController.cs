@@ -18,6 +18,8 @@ namespace POS.Controllers
 
             var totalProduct = await _context.FoodItems
                 .CountAsync();
+            var totalDeals = await _context.Deals
+               .CountAsync();
 
             var todayInvoices = await _context.Invoices
                 .Where(x => x.InvoiceDate >= today &&
@@ -33,7 +35,9 @@ namespace POS.Controllers
             {
                 productsCount = totalProduct,
                 TodaysInvoice = todayInvoice,
-                TodaySale = todaySale
+                TodaySale = todaySale,
+                DealsCount = totalDeals
+
             };
 
             return View(viewModel);

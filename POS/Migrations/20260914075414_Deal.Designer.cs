@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using POS.Models;
 
@@ -10,80 +11,14 @@ using POS.Models;
 namespace POS.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260914075414_Deal")]
+    partial class Deal
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.20");
-
-            modelBuilder.Entity("POS.Models.Deal", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<decimal>("DealPrice")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasDefaultValue(true);
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("StartDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Deal", (string)null);
-                });
-
-            modelBuilder.Entity("POS.Models.DealItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("DealId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("FoodItemVariantId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Quantity")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasDefaultValue(1);
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DealId");
-
-                    b.HasIndex("FoodItemVariantId");
-
-                    b.ToTable("DealItem", (string)null);
-                });
 
             modelBuilder.Entity("POS.Models.FoodItem", b =>
                 {
@@ -220,25 +155,6 @@ namespace POS.Migrations
                     b.ToTable("InvoiceItems");
                 });
 
-            modelBuilder.Entity("POS.Models.DealItem", b =>
-                {
-                    b.HasOne("POS.Models.Deal", "Deal")
-                        .WithMany("DealItems")
-                        .HasForeignKey("DealId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("POS.Models.FoodItemVariant", "FoodItemVariant")
-                        .WithMany()
-                        .HasForeignKey("FoodItemVariantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Deal");
-
-                    b.Navigation("FoodItemVariant");
-                });
-
             modelBuilder.Entity("POS.Models.FoodItemVariant", b =>
                 {
                     b.HasOne("POS.Models.FoodItem", "FoodItem")
@@ -275,11 +191,6 @@ namespace POS.Migrations
                     b.Navigation("FoodItemVariant");
 
                     b.Navigation("Invoice");
-                });
-
-            modelBuilder.Entity("POS.Models.Deal", b =>
-                {
-                    b.Navigation("DealItems");
                 });
 
             modelBuilder.Entity("POS.Models.FoodItem", b =>

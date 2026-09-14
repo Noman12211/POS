@@ -7,6 +7,7 @@ namespace POS.POSViewModels
         public int productsCount { get; set; } 
         public int TodaysInvoice { get; set; } = 0;
         public decimal TodaySale { get; set; } = 0;
+        public int DealsCount { get; set; }
     }
      
 }
