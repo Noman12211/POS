@@ -19,7 +19,7 @@
 </div>
 
 
-<form asp-action="Edit" method="post">
+<form asp-action="Edit" method="post"enctype="multipart/form-data">
 
     @if (!ViewData.ModelState.IsValid)
     {
@@ -151,9 +151,30 @@
 
                 </div>
 
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Product Image</label>
 
+                    @if (!string.IsNullOrEmpty(Model.ImagePath))
+                    {
+                        <div class="mb-2">
+                            <img src="@Model.ImagePath"
+                                 alt="@Model.Name"
+                                 style="width:80px; height:80px; object-fit:cover;" />
+                            <div class="text-muted small">Current image</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted small mb-2">No image uploaded</div>
+                    }<input asp-for="ImageFile"
+                            class="form-control"
+                            type="file"
+                            accept="image/*" />
+
+                    <span asp-validation-for="ImageFile" class="text-danger"></span>
+                    </div>
                 <!-- DESCRIPTION -->
-                <div class="col-md-12 mb-3">
+                <div class="col-md-6 mb-3">
 
                     <label asp-for="Description"
                            class="form-label">

@@ -107,6 +107,7 @@ namespace POS.Controllers
                 await PopulateVariantsViewBag();
                 return View(model);
             }
+            
 
             var deal = new Deal
             {
@@ -126,6 +127,36 @@ namespace POS.Controllers
                     })
                     .ToList()
             };
+            if (model.ImageFile != null && model.ImageFile.Length > 0)
+            {
+                var uploadsFolder = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    "images",
+                    "deals"
+                );
+
+                // Create folder if it doesn't exist
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                // Generate unique file name
+                var fileName = Guid.NewGuid().ToString() +
+                               Path.GetExtension(model.ImageFile.FileName);
+
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                // Save image
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await model.ImageFile.CopyToAsync(stream);
+                }
+
+                // Save relative path in database
+                deal.ImagePath = "/images/deals/" + fileName;
+            }
 
             _context.Deals.Add(deal);
             await _context.SaveChangesAsync();
@@ -151,6 +182,7 @@ namespace POS.Controllers
             var model = new DealFormViewModel
             {
                 Id = deal.Id,
+                ImagePath= deal.ImagePath,
                 Name = deal.Name,
                 Description = deal.Description,
                 DealPrice = deal.DealPrice,
@@ -231,6 +263,55 @@ namespace POS.Controllers
             deal.StartDate = model.StartDate;
             deal.EndDate = model.EndDate;
             deal.UpdatedAt = DateTime.UtcNow;
+            // Handle image replacement
+            if (model.ImageFile != null && model.ImageFile.Length > 0)
+            {
+                var uploadsFolder = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    "images",
+                    "deals"
+                );
+
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                var fileName = Guid.NewGuid().ToString() +
+                               Path.GetExtension(model.ImageFile.FileName);
+
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await model.ImageFile.CopyToAsync(stream);
+                }
+
+                // Delete old image file if one exists (non-blocking)
+                if (!string.IsNullOrEmpty(deal.ImagePath))
+                {
+                    try
+                    {
+                        var oldFilePath = Path.Combine(
+                            Directory.GetCurrentDirectory(),
+                            "wwwroot",
+                            deal.ImagePath.TrimStart('/')
+                        );
+
+                        if (System.IO.File.Exists(oldFilePath))
+                        {
+                            System.IO.File.Delete(oldFilePath);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // Old file cleanup failed — not critical, continue
+                    }
+                }
+
+                deal.ImagePath = "/images/deals/" + fileName;
+            }
 
             // Replace deal items wholesale (simplest, avoids diffing logic)
             _context.DealItems.RemoveRange(deal.DealItems);

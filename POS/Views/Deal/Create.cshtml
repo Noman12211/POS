@@ -19,7 +19,7 @@
 </div>
 
 
-<form asp-action="Create" method="post">
+<form asp-action="Create" method="post" enctype="multipart/form-data">
 
     @if (!ViewData.ModelState.IsValid)
     {
@@ -145,10 +145,19 @@
                     </div>
 
                 </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="ImageFile" class="form-label"></label>
 
+                    <input asp-for="ImageFile"
+                           class="form-control"
+                           type="file"
+                           accept="image/*" />
+
+                    <span asp-validation-for="ImageFile" class="text-danger"></span>
+                </div>
 
                 <!-- DESCRIPTION -->
-                <div class="col-md-12 mb-3">
+                <div class="col-md-6 mb-3">
 
                     <label asp-for="Description"
                            class="form-label">

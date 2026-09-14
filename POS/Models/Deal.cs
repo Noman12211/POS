@@ -10,6 +10,8 @@ public class Deal
     public decimal DealPrice { get; set; }
 
     public bool IsActive { get; set; } = true;
+    public string? ImagePath { get; set; }
+
 
     public DateTime? StartDate { get; set; }
 

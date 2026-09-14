@@ -18,7 +18,7 @@ namespace POS.Controllers
 
             var totalProduct = await _context.FoodItems
                 .CountAsync();
-            var totalDeals = await _context.Deals
+            var totalDeals = await _context.Deals.Where(x=>x.IsActive)
                .CountAsync();
 
             var todayInvoices = await _context.Invoices

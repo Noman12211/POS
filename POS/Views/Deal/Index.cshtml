@@ -56,6 +56,9 @@
                     <thead>
 
                         <tr>
+                            <th>
+                                Image
+                            </th>
 
                             <th>
                                 Deal
@@ -90,6 +93,18 @@
                         @foreach (var deal in Model)
                         {
                             <tr>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(deal.ImagePath))
+                                    {
+                                        <img src="@deal.ImagePath"
+                                             alt="@deal.Name"
+                                             style="width:80px; height:80px; object-fit:cover;" />
+                                    }
+                                    else
+                                    {
+                                        <span>No Image</span>
+                                    }
+                                </td>
 
                                 <td>
 
@@ -105,7 +120,7 @@
                                     }
 
                                 </td>
-
+                                
 
                                 <td>
 
