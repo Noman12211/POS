@@ -129,7 +129,7 @@
                                                         data-product-name="@item.Name"
                                                         data-variant-name="@variant.VariantName"
                                                         data-price="@variant.Price"
-                                                        data-custom="@variant.IsCustomPrice">
+                                                        data-custom="@variant.IsCustomPrice.ToString().ToLowerInvariant()">
                                                 </button>
                                             }
                                         }
@@ -1806,70 +1806,38 @@
 
 
                     div.innerHTML = `
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="cart-item-name">${escapeHtml(item.productName)}</div>
+                    <div class="cart-variant">${escapeHtml(item.variantName)}</div>
+                </div>
+                <button type="button" class="btn btn-sm btn-link text-danger remove-cart-item" data-index="${index}">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
 
-                        <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <div class="quantity-control">
+                    <button type="button" class="btn btn-outline-secondary btn-sm decrease-qty" data-index="${index}">−</button>
+                    <input type="text" class="form-control form-control-sm" value="${item.quantity}" readonly />
+                    <button type="button" class="btn btn-outline-secondary btn-sm increase-qty" data-index="${index}">+</button>
+                </div>
 
-                            <div>
+                ${item.customPrice !== null
+                            ? `<div class="d-flex align-items-center gap-1">
+                           <span class="text-muted small">Price</span>
+                           <input type="number" min="0.01" step="0.01"
+                                  class="form-control form-control-sm custom-price-input"
+                                  style="width:85px"
+                                  data-index="${index}"
+                                  value="${item.price}" />
+                       </div>`
+                            : `<span class="text-muted small">${item.price.toFixed(2)} each</span>`
+                        }
 
-                                <div class="cart-item-name">
-                                    ${escapeHtml(item.productName)}
-                                </div>
-
-                                <div class="cart-variant">
-                                    ${escapeHtml(item.variantName)}
-                                </div>
-
-                            </div>
-
-
-                            <button type="button"
-                                    class="btn btn-sm btn-link text-danger remove-cart-item"
-                                    data-index="${index}">
-
-                                <i class="bi bi-trash"></i>
-
-                            </button>
-
-                        </div>
-
-
-                        <div class="d-flex justify-content-between align-items-center mt-2">
-
-                            <div class="quantity-control">
-
-                                <button type="button"
-                                        class="btn btn-outline-secondary btn-sm decrease-qty"
-                                        data-index="${index}">
-
-                                    −
-
-                                </button>
-
-
-                                <input type="text"
-                                       class="form-control form-control-sm"
-                                       value="${item.quantity}"
-                                       readonly />
-
-
-                                <button type="button"
-                                        class="btn btn-outline-secondary btn-sm increase-qty"
-                                        data-index="${index}">
-
-                                    +
-
-                                </button>
-
-                            </div>
-
-
-                            <strong>
-                                ${itemTotal.toFixed(2)}
-                            </strong>
-
-                        </div>
-
-                    `;
+                <strong id="itemTotal-${index}">${itemTotal.toFixed(2)}</strong>
+            </div>
+        `;
 
 
                     container.appendChild(
@@ -2056,7 +2024,38 @@
 
         }
 
+        // ==================================================
+        // CUSTOM PRICE EDIT (inline, in cart)
+        // ==================================================
 
+        document.querySelectorAll(".custom-price-input").forEach(function (input) {
+
+            input.addEventListener("input", function () {
+
+                const index = parseInt(this.dataset.index);
+
+                if (!cart[index]) return;
+
+                let val = parseFloat(this.value);
+
+                if (isNaN(val) || val < 0) {
+                    val = 0;
+                }
+
+                cart[index].price = val;
+                cart[index].customPrice = val;
+
+                const lineTotal = val * cart[index].quantity;
+
+                const lineTotalEl = document.getElementById("itemTotal-" + index);
+                if (lineTotalEl) {
+                    lineTotalEl.textContent = lineTotal.toFixed(2);
+                }
+
+                recalcTotals();
+            });
+
+        });
 
         // ==========================================================
         // CLEAR CART
@@ -2117,11 +2116,16 @@
                     // ==============================================
 
                     if (cart.length === 0) {
+                        alert("Please add at least one item.");
+                        return;
+                    }
 
-                        alert(
-                            "Please add at least one item."
-                        );
+                    const invalidCustom = cart.some(function (item) {
+                        return item.customPrice !== null && (!item.price || item.price <= 0);
+                    });
 
+                    if (invalidCustom) {
+                        alert("Please enter a valid price for all custom-priced items before checking out.");
                         return;
                     }
 
@@ -2492,7 +2496,21 @@
 
         }
 
+        function recalcTotals() {
 
+            let total = 0;
+            let itemCount = 0;
+
+            cart.forEach(function (item) {
+                total += item.price * item.quantity;
+                itemCount += item.quantity;
+            });
+
+            document.getElementById("cartCount").textContent = itemCount;
+            document.getElementById("subTotal").textContent = total.toFixed(2);
+            document.getElementById("grandTotal").textContent = total.toFixed(2);
+            document.getElementById("checkoutBtn").disabled = cart.length === 0;
+        }
 
         // ==========================================================
         // INITIAL CART RENDER
